@@ -179,7 +179,7 @@ void ProcessLevelData(const std::string& levelData) {
     
     std::cout << "[GD-MCP] Processed " << objectCount << " objects" << std::endl;
     
-    OutputDebugStringA(("[GD-MCP] Level processing complete").c_str());
+    OutputDebugStringA("[GD-MCP] Level processing complete");
 }
 
 // DLL Entry Point
