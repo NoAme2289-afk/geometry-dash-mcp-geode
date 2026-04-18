@@ -412,4 +412,125 @@ public:
         
         return trigger;
     }
+    
+    // Get level info (object count, groups used, etc.)
+    static std::string getLevelInfo(EditorUI* editorUI) {
+        if (!editorUI) return "ERROR: No editor";
+        
+        auto editor = editorUI->m_editorLayer;
+        if (!editor) return "ERROR: No editor layer";
+        
+        auto objects = editor->m_objects;
+        if (!objects) return "ERROR: No objects array";
+        
+        int totalObjects = objects->count();
+        
+        // Count objects by type
+        int blocks = 0;
+        int spikes = 0;
+        int portals = 0;
+        int orbs = 0;
+        int triggers = 0;
+        int decorations = 0;
+        
+        // Track used groups
+        std::set<int> usedGroups;
+        
+        for (int i = 0; i < totalObjects; i++) {
+            auto obj = static_cast<GameObject*>(objects->objectAtIndex(i));
+            if (!obj) continue;
+            
+            int objID = obj->m_objectID;
+            
+            // Categorize objects
+            if (objID == 1 || objID == 40) blocks++;
+            else if (objID >= 8 && objID <= 39) spikes++;
+            else if (objID >= 10 && objID <= 1933) portals++;
+            else if (objID >= 36 && objID <= 1751) orbs++;
+            else if (objID >= 899 && objID <= 3602) triggers++;
+            else decorations++;
+            
+            // Collect groups
+            if (obj->m_groups) {
+                for (int j = 0; j < obj->m_groups->count(); j++) {
+                    usedGroups.insert(obj->m_groups->objectAtIndex(j));
+                }
+            }
+        }
+        
+        std::string result = "LEVEL_INFO:";
+        result += "total=" + std::to_string(totalObjects);
+        result += ",blocks=" + std::to_string(blocks);
+        result += ",spikes=" + std::to_string(spikes);
+        result += ",portals=" + std::to_string(portals);
+        result += ",orbs=" + std::to_string(orbs);
+        result += ",triggers=" + std::to_string(triggers);
+        result += ",decorations=" + std::to_string(decorations);
+        result += ",groups=" + std::to_string(usedGroups.size());
+        
+        return result;
+    }
+    
+    // List all objects in level
+    static std::string listObjects(EditorUI* editorUI, int limit = 50) {
+        if (!editorUI) return "ERROR: No editor";
+        
+        auto editor = editorUI->m_editorLayer;
+        if (!editor) return "ERROR: No editor layer";
+        
+        auto objects = editor->m_objects;
+        if (!objects) return "ERROR: No objects array";
+        
+        std::string result = "OBJECTS_LIST:";
+        int count = std::min(limit, objects->count());
+        
+        for (int i = 0; i < count; i++) {
+            auto obj = static_cast<GameObject*>(objects->objectAtIndex(i));
+            if (!obj) continue;
+            
+            auto pos = obj->getPosition();
+            result += std::to_string(i) + ":{";
+            result += "id=" + std::to_string(obj->m_objectID);
+            result += ",x=" + std::to_string(pos.x);
+            result += ",y=" + std::to_string(pos.y);
+            result += "}";
+            
+            if (i < count - 1) result += ",";
+        }
+        
+        return result;
+    }
+    
+    // Undo last action
+    static bool undoAction(EditorUI* editorUI) {
+        if (!editorUI) return false;
+        
+        auto editor = editorUI->m_editorLayer;
+        if (!editor) return false;
+        
+        editor->undoLastAction();
+        return true;
+    }
+    
+    // Redo last action
+    static bool redoAction(EditorUI* editorUI) {
+        if (!editorUI) return false;
+        
+        auto editor = editorUI->m_editorLayer;
+        if (!editor) return false;
+        
+        editor->redoLastAction();
+        return true;
+    }
+    
+    // Save level
+    static bool saveLevel(EditorUI* editorUI) {
+        if (!editorUI) return false;
+        
+        auto editor = editorUI->m_editorLayer;
+        if (!editor) return false;
+        
+        editor->saveLevel();
+        return true;
+    }
 };
