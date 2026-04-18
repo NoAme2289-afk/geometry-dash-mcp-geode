@@ -736,14 +736,6 @@ void ProcessCommand(LevelEditorLayer* editor, const std::string& command) {
             AddMCPLog("[ERROR] Failed to redo");
         }
     }
-    else if (cmdType == "SAVE_LEVEL") {
-        // Save level
-        if (ObjectCommandHandler::saveLevel(editorUI)) {
-            AddMCPLog("[SUCCESS] Level saved");
-        } else {
-            AddMCPLog("[ERROR] Failed to save level");
-        }
-    }
     else {
         log::error("Unknown command type: {}", cmdType);
         AddMCPLog(fmt::format("[ERROR] Unknown command: {}", cmdType));
