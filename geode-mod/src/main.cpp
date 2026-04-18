@@ -88,16 +88,20 @@ void ProcessLevelData(const std::string& levelData) {
                 float y = std::stof(yStr);
 
                 // Create object using Geode API
-                std::string objectString = fmt::format("1,{},2,{},3,{}", objID, x, y);
-                auto obj = GameObject::objectFromString(objectString);
+                auto obj = GameObject::createWithKey(objID);
 
                 if (obj) {
-                    // Add object to editor
-                    editor->addObject(obj);
+                    // Set position
+                    obj->setPosition(ccp(x, y));
+                    
+                    // Add object to editor layer
+                    editor->m_objectLayer->addChild(obj);
+                    editor->m_objects->addObject(obj);
+                    
                     objectCount++;
                     log::info("Created object: ID={} X={} Y={}", objID, x, y);
                 } else {
-                    log::error("Failed to create object from string: {}", objectString);
+                    log::error("Failed to create object with ID: {}", objID);
                 }
             } catch (const std::exception& e) {
                 log::error("Error parsing object: {}", e.what());
