@@ -91,11 +91,14 @@ void ProcessLevelData(const std::string& levelData) {
 
                 log::info("Attempting to create object: ID={} X={} Y={}", objID, x, y);
 
-                // Try using objectFromString instead
-                std::string objString = fmt::format("1,{};2,{};3,{}", objID, x, y);
-                auto obj = GameObject::objectFromString(objString, false);
+                // Create object using createWithKey
+                auto obj = GameObject::createWithKey(objID);
 
                 if (obj) {
+                    // Initialize and setup object
+                    obj->setPosition({x, y});
+                    obj->setStartPos({x, y});
+                    
                     // Add object to editor layer
                     editor->m_objectLayer->addChild(obj);
                     editor->m_objects->addObject(obj);
@@ -103,7 +106,7 @@ void ProcessLevelData(const std::string& levelData) {
                     objectCount++;
                     log::info("SUCCESS: Created object: ID={} X={} Y={}", objID, x, y);
                 } else {
-                    log::error("FAILED: GameObject::objectFromString returned null for ID={}", objID);
+                    log::error("FAILED: GameObject::createWithKey returned null for ID={}", objID);
                 }
             } catch (const std::exception& e) {
                 log::error("Error parsing object: {}", e.what());
