@@ -493,6 +493,23 @@ void ProcessCommand(LevelEditorLayer* editor, const std::string& command) {
         AddMCPLog(fmt::format("[SUCCESS] Deleted {} objects from group {}", deletedCount, groupID));
         editorUI->updateButtons();
     }
+    else if (cmdType == "DELETE_ALL") {
+        // Delete all objects in the level
+        auto objects = editor->m_objects;
+        if (objects) {
+            int deletedCount = 0;
+            // Delete in reverse order to avoid index issues
+            for (int i = objects->count() - 1; i >= 0; i--) {
+                auto obj = static_cast<GameObject*>(objects->objectAtIndex(i));
+                if (obj) {
+                    editor->removeObject(obj, true);
+                    deletedCount++;
+                }
+            }
+            AddMCPLog(fmt::format("[SUCCESS] Deleted all {} objects", deletedCount));
+            editorUI->updateButtons();
+        }
+    }
     else {
         log::error("Unknown command type: {}", cmdType);
         AddMCPLog(fmt::format("[ERROR] Unknown command: {}", cmdType));
