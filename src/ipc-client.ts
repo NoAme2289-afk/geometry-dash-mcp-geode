@@ -37,7 +37,11 @@ export class IPCClient {
 
   async loadLevel(levelData: string): Promise<boolean> {
     try {
-      const response = await this.sendCommand(`LOAD_LEVEL:${levelData}`);
+      // Decode base64 to get actual level data
+      const decoded = Buffer.from(levelData, 'base64').toString('utf-8');
+      console.error('[IPC] Sending decoded data:', decoded.substring(0, 100));
+      
+      const response = await this.sendCommand(`LOAD_LEVEL:${decoded}`);
       return response === "OK";
     } catch (error) {
       throw error;

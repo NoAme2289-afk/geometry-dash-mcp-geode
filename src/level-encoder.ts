@@ -43,6 +43,20 @@ function encodeObject(obj: GDObject): string {
 }
 
 /**
+ * Encode level to simple format for DLL injection
+ * Format: id,x,y;id,x,y;id,x,y
+ */
+export function encodeForInjection(level: GDLevel): string {
+  if (level.objects.length === 0) {
+    return "";
+  }
+
+  return level.objects
+    .map(obj => `${obj.id},${obj.x},${obj.y}`)
+    .join(";");
+}
+
+/**
  * Encode level to Geometry Dash level string format
  * This is a simplified version - real GD levels use more complex encoding
  */
