@@ -201,5 +201,51 @@ def main() -> int:
         else:
             return "Failed to send command"
 
+    @mcp.tool()
+    def gd_render_level(output_path: str = None) -> str:
+        """Render the current Geometry Dash level to PNG image with grid
+        
+        Args:
+            output_path: Optional output path for PNG file (default: Desktop/gd_level_render.png)
+        
+        Returns:
+            Path to rendered PNG file
+        """
+        from .renderer import render_level
+        import os
+        
+        # Send EXPORT_LEVEL command to get JSON data
+        if send_command("EXPORT_LEVEL"):
+            # Wait for response
+            time.sleep(0.5)
+            
+            # Read response from pipe
+            try:
+                handle = win32file.CreateFile(
+                    PIPE_NAME,
+                    win32file.GENERIC_READ | win32file.GENERIC_WRITE,
+                    0, None,
+                    win32file.OPEN_EXISTING,
+                    0, None
+                )
+                
+                # Read JSON data
+                result, data = win32file.ReadFile(handle, 64 * 1024)
+                win32file.CloseHandle(handle)
+                
+                json_data = data.decode('utf-8').strip()
+                
+                # Render level
+                if output_path is None:
+                    output_path = os.path.join(os.path.expanduser("~"), "Desktop", "gd_level_render.png")
+                
+                rendered_path = render_level(json_data, output_path)
+                return f"Level rendered successfully: {rendered_path}"
+                
+            except Exception as e:
+                return f"Failed to render level: {str(e)}"
+        else:
+            return "Failed to send EXPORT_LEVEL command"
+
     mcp.run(transport="stdio")
     return 0
