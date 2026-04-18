@@ -30,6 +30,10 @@ jobs:
       run: |
         git clone --depth 1 https://github.com/geode-sdk/geode.git ${{ github.workspace }}/geode-sdk
         
+    - name: Install Geode SDK Binaries
+      run: |
+        geode sdk install-binaries
+        
     - name: Build Geode Mod
       working-directory: geode-mod
       env:
