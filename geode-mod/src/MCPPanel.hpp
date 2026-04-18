@@ -1,6 +1,5 @@
 #pragma once
 #include <Geode/Geode.hpp>
-#include <Geode/ui/Popup.hpp>
 
 using namespace geode::prelude;
 
@@ -18,16 +17,19 @@ inline void AddMCPLog(const std::string& message) {
     }
 }
 
-class MCPPanel : public Popup<> {
+class MCPPanel : public FLAlertLayer {
 protected:
     CCLabelBMFont* m_statusLabel;
-    TextArea* m_logArea;
+    CCLabelBMFont* m_logLabel;
     CCMenu* m_buttonMenu;
     
-    bool setup() override {
-        auto winSize = CCDirector::sharedDirector()->getWinSize();
+    bool init() {
+        if (!FLAlertLayer::init(nullptr, "MCP Control", "OK", nullptr, 320.0f, false, 240.0f, 1.0f)) {
+            return false;
+        }
         
-        this->setTitle("MCP Control Panel");
+        auto winSize = CCDirector::sharedDirector()->getWinSize();
+        auto layer = this->m_mainLayer;
         
         // Status label
         m_statusLabel = CCLabelBMFont::create(
@@ -35,13 +37,13 @@ protected:
             "bigFont.fnt"
         );
         m_statusLabel->setScale(0.5f);
-        m_statusLabel->setPosition(winSize.width / 2, winSize.height / 2 + 80);
-        m_mainLayer->addChild(m_statusLabel);
+        m_statusLabel->setPosition(160, 200);
+        layer->addChild(m_statusLabel);
         
         // Start/Stop button
         auto toggleBtn = CCMenuItemSpriteExtra::create(
             ButtonSprite::create(
-                g_serverRunning ? "Stop Server" : "Start Server",
+                g_serverRunning ? "Stop" : "Start",
                 "goldFont.fnt",
                 "GJ_button_01.png",
                 0.8f
@@ -49,44 +51,39 @@ protected:
             this,
             menu_selector(MCPPanel::onToggleServer)
         );
+        toggleBtn->setPosition(-80, 160);
         
         // Copy logs button
         auto copyBtn = CCMenuItemSpriteExtra::create(
-            ButtonSprite::create("Copy Logs", "goldFont.fnt", "GJ_button_01.png", 0.8f),
+            ButtonSprite::create("Copy", "goldFont.fnt", "GJ_button_01.png", 0.8f),
             this,
             menu_selector(MCPPanel::onCopyLogs)
         );
+        copyBtn->setPosition(0, 160);
         
         // Clear logs button
         auto clearBtn = CCMenuItemSpriteExtra::create(
-            ButtonSprite::create("Clear Logs", "goldFont.fnt", "GJ_button_01.png", 0.8f),
+            ButtonSprite::create("Clear", "goldFont.fnt", "GJ_button_01.png", 0.8f),
             this,
             menu_selector(MCPPanel::onClearLogs)
         );
+        clearBtn->setPosition(80, 160);
         
         m_buttonMenu = CCMenu::create();
         m_buttonMenu->addChild(toggleBtn);
         m_buttonMenu->addChild(copyBtn);
         m_buttonMenu->addChild(clearBtn);
-        m_buttonMenu->setLayout(
-            RowLayout::create()
-                ->setGap(10.0f)
-                ->setAxisAlignment(AxisAlignment::Center)
-        );
-        m_buttonMenu->setPosition(winSize.width / 2, winSize.height / 2 + 40);
-        m_buttonMenu->setContentSize({300, 40});
-        m_buttonMenu->updateLayout();
-        m_mainLayer->addChild(m_buttonMenu);
+        m_buttonMenu->setPosition(160, 0);
+        layer->addChild(m_buttonMenu);
         
-        // Log display area
+        // Log display
         std::string logText = getLogsText();
-        m_logArea = TextArea::create(logText, "chatFont.fnt", 0.5f, 280.0f, {0, 0}, 20.0f, false);
-        
-        auto scrollLayer = ScrollLayer::create({280, 100});
-        scrollLayer->m_contentLayer->addChild(m_logArea);
-        scrollLayer->m_contentLayer->setContentSize({280, m_logArea->getContentSize().height});
-        scrollLayer->setPosition(winSize.width / 2 - 140, winSize.height / 2 - 60);
-        m_mainLayer->addChild(scrollLayer);
+        m_logLabel = CCLabelBMFont::create(logText.c_str(), "chatFont.fnt");
+        m_logLabel->setScale(0.4f);
+        m_logLabel->setPosition(160, 80);
+        m_logLabel->setAnchorPoint({0.5f, 0.5f});
+        m_logLabel->setAlignment(kCCTextAlignmentLeft);
+        layer->addChild(m_logLabel);
         
         return true;
     }
@@ -94,8 +91,9 @@ protected:
     std::string getLogsText() {
         std::lock_guard<std::mutex> lock(g_logMutex);
         std::string result;
-        for (const auto& log : g_mcpLogs) {
-            result += log + "\n";
+        int count = 0;
+        for (auto it = g_mcpLogs.rbegin(); it != g_mcpLogs.rend() && count < 10; ++it, ++count) {
+            result += *it + "\n";
         }
         if (result.empty()) {
             result = "No logs yet...";
@@ -114,7 +112,6 @@ protected:
             m_statusLabel->setString("Server: Stopped");
         }
         
-        // Refresh logs
         refreshLogs();
     }
     
@@ -124,7 +121,7 @@ protected:
         
         FLAlertLayer::create(
             "Success",
-            "Logs copied to clipboard!",
+            "Logs copied!",
             "OK"
         )->show();
     }
@@ -138,13 +135,13 @@ protected:
     
     void refreshLogs() {
         std::string logText = getLogsText();
-        m_logArea->setString(logText);
+        m_logLabel->setString(logText.c_str());
     }
     
 public:
     static MCPPanel* create() {
         auto ret = new MCPPanel();
-        if (ret && ret->initAnchored(320.0f, 240.0f)) {
+        if (ret && ret->init()) {
             ret->autorelease();
             return ret;
         }
