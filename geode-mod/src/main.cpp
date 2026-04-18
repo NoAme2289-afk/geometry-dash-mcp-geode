@@ -710,6 +710,40 @@ void ProcessCommand(LevelEditorLayer* editor, const std::string& command) {
             }
         }
     }
+    else if (cmdType == "GET_LEVEL_INFO") {
+        // Get level information
+        std::string info = ObjectCommandHandler::getLevelInfo(editorUI);
+        AddMCPLog(info);
+    }
+    else if (cmdType == "LIST_OBJECTS") {
+        // List all objects (limit 50)
+        std::string list = ObjectCommandHandler::listObjects(editorUI, 50);
+        AddMCPLog(list);
+    }
+    else if (cmdType == "UNDO") {
+        // Undo last action
+        if (ObjectCommandHandler::undoAction(editorUI)) {
+            AddMCPLog("[SUCCESS] Undo action");
+        } else {
+            AddMCPLog("[ERROR] Failed to undo");
+        }
+    }
+    else if (cmdType == "REDO") {
+        // Redo last action
+        if (ObjectCommandHandler::redoAction(editorUI)) {
+            AddMCPLog("[SUCCESS] Redo action");
+        } else {
+            AddMCPLog("[ERROR] Failed to redo");
+        }
+    }
+    else if (cmdType == "SAVE_LEVEL") {
+        // Save level
+        if (ObjectCommandHandler::saveLevel(editorUI)) {
+            AddMCPLog("[SUCCESS] Level saved");
+        } else {
+            AddMCPLog("[ERROR] Failed to save level");
+        }
+    }
     else {
         log::error("Unknown command type: {}", cmdType);
         AddMCPLog(fmt::format("[ERROR] Unknown command: {}", cmdType));
