@@ -3,6 +3,7 @@
 #include <Geode/modify/EditorUI.hpp>
 #include "MCPPanel.hpp"
 #include "CommandHandlers.hpp"
+#include <fstream>
 
 using namespace geode::prelude;
 
@@ -740,6 +741,15 @@ void ProcessCommand(LevelEditorLayer* editor, const std::string& command) {
         // Export level to JSON
         std::string json = ObjectCommandHandler::exportLevelToJSON(editorUI);
         AddMCPLog(json);
+        
+        // Also save to file for easy access
+        std::string desktopPath = std::string(getenv("USERPROFILE")) + "\\Desktop\\gd_level_export.json";
+        std::ofstream outFile(desktopPath);
+        if (outFile.is_open()) {
+            outFile << json;
+            outFile.close();
+            AddMCPLog(fmt::format("[INFO] Exported to: {}", desktopPath));
+        }
     }
     else {
         log::error("Unknown command type: {}", cmdType);
