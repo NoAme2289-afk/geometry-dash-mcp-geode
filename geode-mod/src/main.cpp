@@ -1,6 +1,7 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/LevelEditorLayer.hpp>
 #include <Geode/modify/EditorUI.hpp>
+#include "MCPPanel.hpp"
 
 using namespace geode::prelude;
 
@@ -45,6 +46,7 @@ void IPCThread() {
                     g_levelUpdated = true;
 
                     log::info("Received level data: {}", g_currentLevelData.substr(0, 50));
+                    AddMCPLog("[INFO] Received level data from MCP");
 
                     // Send response
                     const char* response = "OK";
@@ -64,11 +66,13 @@ void ProcessLevelData(const std::string& levelData) {
     auto editor = LevelEditorLayer::get();
     if (!editor) {
         log::error("LevelEditorLayer not found!");
+        AddMCPLog("[ERROR] LevelEditorLayer not found!");
         return;
     }
 
     log::info("Processing level data... Editor found!");
     log::info("Level data: {}", levelData);
+    AddMCPLog("[INFO] Processing level data...");
 
     // Parse format: id,x,y;id,x,y;id,x,y
     std::stringstream ss(levelData);
@@ -105,18 +109,23 @@ void ProcessLevelData(const std::string& levelData) {
                     
                     objectCount++;
                     log::info("SUCCESS: Created object: ID={} X={} Y={}", objID, x, y);
+                    AddMCPLog(fmt::format("[SUCCESS] Created object: ID={} X={} Y={}", objID, x, y));
                 } else {
                     log::error("FAILED: GameObject::createWithKey returned null for ID={}", objID);
+                    AddMCPLog(fmt::format("[ERROR] Failed to create object ID={}", objID));
                 }
             } catch (const std::exception& e) {
                 log::error("Error parsing object: {}", e.what());
+                AddMCPLog(fmt::format("[ERROR] Parse error: {}", e.what()));
             }
         } else {
             log::error("Failed to parse token: {}", token);
+            AddMCPLog(fmt::format("[ERROR] Failed to parse: {}", token));
         }
     }
 
     log::info("Successfully created {} objects", objectCount);
+    AddMCPLog(fmt::format("[INFO] Created {} objects", objectCount));
 
     // Refresh editor view
     if (auto editorUI = editor->m_editorUI) {
@@ -153,6 +162,46 @@ class $modify(GDMCPLevelEditorLayer, LevelEditorLayer) {
     }
 };
 
+// Hook into EditorUI to add MCP button
+class $modify(GDMCPEditorUI, EditorUI) {
+    bool init(LevelEditorLayer* editor) {
+        if (!EditorUI::init(editor)) {
+            return false;
+        }
+        
+        // Add MCP button to top menu
+        auto winSize = CCDirector::sharedDirector()->getWinSize();
+        
+        auto mcpBtn = CCMenuItemSpriteExtra::create(
+            ButtonSprite::create("MCP", "goldFont.fnt", "GJ_button_01.png", 0.8f),
+            this,
+            menu_selector(GDMCPEditorUI::onMCPButton)
+        );
+        mcpBtn->setPosition(winSize.width - 30, winSize.height - 30);
+        
+        // Add to existing menu or create new one
+        if (auto menu = this->getChildByID("top-menu")) {
+            static_cast<CCMenu*>(menu)->addChild(mcpBtn);
+        } else {
+            auto newMenu = CCMenu::create();
+            newMenu->setID("mcp-menu");
+            newMenu->addChild(mcpBtn);
+            newMenu->setPosition(0, 0);
+            this->addChild(newMenu);
+        }
+        
+        AddMCPLog("[INFO] MCP button added to editor");
+        
+        return true;
+    }
+    
+    void onMCPButton(CCObject*) {
+        AddMCPLog("[INFO] MCP panel opened");
+        MCPPanel::create()->show();
+    }
+};
+
 $execute {
     log::info("GD-MCP Geode Mod loaded!");
+    AddMCPLog("[INFO] GD-MCP Mod initialized");
 }
