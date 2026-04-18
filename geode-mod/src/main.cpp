@@ -111,24 +111,21 @@ void ProcessLevelData(LevelEditorLayer* editor, const std::string& levelData) {
 
                 log::info("Attempting to create object: ID={} X={} Y={}", objID, x, y);
 
-                // Create object using createWithKey
-                auto obj = GameObject::createWithKey(objID);
-
-                if (obj) {
-                    // Initialize and setup object
-                    obj->setPosition({x, y});
-                    obj->setStartPos({x, y});
+                // Use EditorUI to create object properly
+                if (auto editorUI = editor->m_editorUI) {
+                    auto obj = editorUI->createObject(objID, {x, y}, false);
                     
-                    // Add object to editor layer
-                    editor->m_objectLayer->addChild(obj);
-                    editor->m_objects->addObject(obj);
-                    
-                    objectCount++;
-                    log::info("SUCCESS: Created object: ID={} X={} Y={}", objID, x, y);
-                    AddMCPLog(fmt::format("[SUCCESS] Created object: ID={} X={} Y={}", objID, x, y));
+                    if (obj) {
+                        objectCount++;
+                        log::info("SUCCESS: Created object: ID={} X={} Y={}", objID, x, y);
+                        AddMCPLog(fmt::format("[SUCCESS] Created object: ID={} X={} Y={}", objID, x, y));
+                    } else {
+                        log::error("FAILED: createObject returned null for ID={}", objID);
+                        AddMCPLog(fmt::format("[ERROR] Failed to create object ID={}", objID));
+                    }
                 } else {
-                    log::error("FAILED: GameObject::createWithKey returned null for ID={}", objID);
-                    AddMCPLog(fmt::format("[ERROR] Failed to create object ID={}", objID));
+                    log::error("EditorUI not found!");
+                    AddMCPLog("[ERROR] EditorUI not found!");
                 }
             } catch (const std::exception& e) {
                 log::error("Error parsing object: {}", e.what());
