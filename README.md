@@ -34,7 +34,7 @@
 ### 1. Установка Geode мода
 
 1. Скачайте последнюю версию мода из [Releases](https://github.com/NoAme2289-afk/geometry-dash-mcp-geode/releases)
-2. Скопируйте `noame2289.gdmcp.geode` в папку `%LOCALAPPDATA%\GeometryDash\geode\mods\`
+2. Скопируйте `gdmcp.geode` в папку `%LOCALAPPDATA%\GeometryDash\geode\mods\`
 3. Запустите Geometry Dash
 
 ### 2. Установка Python MCP сервера
