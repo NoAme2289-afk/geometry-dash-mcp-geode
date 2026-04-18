@@ -6,8 +6,8 @@
 		"mac": "2.2081",
 		"ios": "2.2081"
 	},
-	"version": "v1.0.1",
-	"id": "noame2289.gdmcp",
+	"version": "v1.0.2",
+	"id": "gdmcp",
 	"name": "GDMCP",
 	"developer": "NoAme2289",
 	"description": "AI-powered level creation system for Geometry Dash via MCP",
