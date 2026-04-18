@@ -23,11 +23,17 @@ jobs:
       with:
         submodules: recursive
 
-    - name: Setup Geode SDK
+    - name: Setup Geode CLI
       uses: geode-sdk/cli/.github/actions/setup@main
 
+    - name: Clone Geode SDK
+      run: |
+        git clone --depth 1 https://github.com/geode-sdk/geode.git ${{ github.workspace }}/geode-sdk
+        
     - name: Build Geode Mod
       working-directory: geode-mod
+      env:
+        GEODE_SDK: ${{ github.workspace }}/geode-sdk
       run: |
         cmake -B build -DCMAKE_BUILD_TYPE=Release
         cmake --build build --config Release
@@ -36,4 +42,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: gd-mcp-mod-${{ matrix.config.name }}
-        path: geode-mod/build/*.geode
+        path: geode-mod/build/**/*.geode
