@@ -1,7 +1,0 @@
-Metadata-Version: 2.4
-Name: mcp-server-gd
-Version: 1.0.0
-Summary: MCP server for Geometry Dash level editor control
-Requires-Python: >=3.10
-Requires-Dist: mcp>=1.0.0
-Requires-Dist: pywin32

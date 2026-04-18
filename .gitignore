@@ -1,6 +1,70 @@
+# Node modules
 node_modules/
 build/
 dist/
 *.log
 .DS_Store
 .env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+*.egg
+
+# Build artifacts
+*.geode
+gd-injector/bin/
+gd-injector/build/
+
+# Test files
+test-*.py
+test_*.py
+test-*.js
+test_*.js
+test*.mjs
+create-*.py
+check_*.py
+gd-cli.py
+
+# Temporary files
+*.jpg
+*.png
+*.json.bak
+opencode.json
+
+# Old/unused files
+mcp-server.py
+mcp-server.bat
+mcp-server-wrapper.py
+gigachat_vision.py
+gigachat_vision_fixed.py
+gigachat_vision_mcp.py
+mcp_server_gd/server.py
+
+# Documentation (keep only main README)
+EXAMPLES.md
+FINAL_INSTRUCTIONS.md
+GIGACHAT_VISION_README.md
+HOT_RELOAD_GUIDE.md
+OFFSETS_GUIDE.md
+QUICK_START.md
+README_GEODE.md
+SETUP_COMPLETE.md
+SETUP_GEODE.md
+TROUBLESHOOTING.md
+USAGE.md
+GD_LEVEL_DESIGN.md
+GD_OBJECT_IDS.md
+
+# TypeScript (unused)
+src/index.ts
+src/ipc-client.ts
+src/level-encoder.ts
+src/types.ts
+tsconfig.json
+package.json
+package-lock.json
