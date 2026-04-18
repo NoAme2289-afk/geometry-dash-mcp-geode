@@ -75,6 +75,30 @@ public:
         
         return result;
     }
+    
+    // Find object by position (within tolerance)
+    static GameObject* findObjectAtPosition(LevelEditorLayer* editor, float x, float y, float tolerance = 10.0f) {
+        if (!editor) return nullptr;
+        
+        auto objects = editor->m_objects;
+        if (!objects) return nullptr;
+        
+        for (int i = 0; i < objects->count(); i++) {
+            auto obj = static_cast<GameObject*>(objects->objectAtIndex(i));
+            if (obj) {
+                auto pos = obj->getPosition();
+                float dx = pos.x - x;
+                float dy = pos.y - y;
+                float dist = sqrt(dx*dx + dy*dy);
+                
+                if (dist <= tolerance) {
+                    return obj;
+                }
+            }
+        }
+        
+        return nullptr;
+    }
 };
 
 // Trigger command handlers

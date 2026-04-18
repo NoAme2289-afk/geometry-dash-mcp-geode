@@ -510,6 +510,51 @@ void ProcessCommand(LevelEditorLayer* editor, const std::string& command) {
             editorUI->updateButtons();
         }
     }
+    else if (cmdType == "EDIT_TRIGGER") {
+        // Format: x,y,property,value
+        // Example: EDIT_TRIGGER:50,150,targetGroup,5
+        std::stringstream ss(cmdData);
+        std::string token;
+        std::vector<std::string> params;
+        while (std::getline(ss, token, ',')) {
+            params.push_back(token);
+        }
+        
+        if (params.size() >= 4) {
+            float x = std::stof(params[0]);
+            float y = std::stof(params[1]);
+            std::string property = params[2];
+            std::string value = params[3];
+            
+            // Find trigger at position
+            auto trigger = ObjectCommandHandler::findObjectAtPosition(editor, x, y);
+            if (trigger) {
+                auto effectObj = typeinfo_cast<EffectGameObject*>(trigger);
+                if (effectObj) {
+                    // Set property based on name
+                    if (property == "targetGroup") {
+                        effectObj->m_targetGroupID = std::stoi(value);
+                        AddMCPLog(fmt::format("[SUCCESS] Set targetGroup to {} for trigger at ({},{})", value, x, y));
+                    }
+                    else if (property == "duration") {
+                        effectObj->m_duration = std::stof(value);
+                        AddMCPLog(fmt::format("[SUCCESS] Set duration to {} for trigger at ({},{})", value, x, y));
+                    }
+                    else if (property == "activate") {
+                        effectObj->m_activateGroup = (value == "1" || value == "true");
+                        AddMCPLog(fmt::format("[SUCCESS] Set activate to {} for trigger at ({},{})", value, x, y));
+                    }
+                    else {
+                        AddMCPLog(fmt::format("[ERROR] Unknown property: {}", property));
+                    }
+                } else {
+                    AddMCPLog(fmt::format("[ERROR] Object at ({},{}) is not a trigger", x, y));
+                }
+            } else {
+                AddMCPLog(fmt::format("[ERROR] No object found at ({},{})", x, y));
+            }
+        }
+    }
     else {
         log::error("Unknown command type: {}", cmdType);
         AddMCPLog(fmt::format("[ERROR] Unknown command: {}", cmdType));
