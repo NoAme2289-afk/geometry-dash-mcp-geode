@@ -62,7 +62,7 @@ public:
         
         for (int i = 0; i < objects->count(); i++) {
             auto obj = static_cast<GameObject*>(objects->objectAtIndex(i));
-            if (obj) {
+            if (obj && obj->m_groups) {
                 // Check if object is in group
                 for (int j = 0; j < obj->m_groups->size(); j++) {
                     if (obj->m_groups->at(j) == groupID) {
