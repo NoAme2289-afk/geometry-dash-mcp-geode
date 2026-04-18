@@ -796,7 +796,7 @@ class $modify(GDMCPEditorUI, EditorUI) {
             this,
             menu_selector(GDMCPEditorUI::onMCPButton)
         );
-        mcpBtn->setPosition(winSize.width - 30, winSize.height - 30);
+        mcpBtn->setPosition(winSize.width - 100, winSize.height - 30);
         
         // Add to existing menu or create new one
         if (auto menu = this->getChildByID("top-menu")) {
