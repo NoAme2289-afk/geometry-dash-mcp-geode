@@ -17,73 +17,99 @@ inline void AddMCPLog(const std::string& message) {
     }
 }
 
-class MCPPanel : public FLAlertLayer {
+class MCPPanel : public CCLayer {
 protected:
     CCLabelBMFont* m_statusLabel;
     CCLabelBMFont* m_logLabel;
     CCMenu* m_buttonMenu;
     
     bool init() {
-        if (!FLAlertLayer::init(nullptr, "MCP Control", "OK", nullptr, 320.0f, false, 240.0f, 1.0f)) {
+        if (!CCLayer::init()) {
             return false;
         }
         
         auto winSize = CCDirector::sharedDirector()->getWinSize();
-        auto layer = this->m_mainLayer;
+        
+        // Background
+        auto bg = CCLayerColor::create({0, 0, 0, 180});
+        this->addChild(bg, -1);
+        
+        // Panel background
+        auto panel = CCScale9Sprite::create("GJ_square01.png");
+        panel->setContentSize({300, 200});
+        panel->setPosition(winSize / 2);
+        this->addChild(panel);
+        
+        // Title
+        auto title = CCLabelBMFont::create("MCP Control Panel", "goldFont.fnt");
+        title->setScale(0.7f);
+        title->setPosition(winSize.width / 2, winSize.height / 2 + 80);
+        this->addChild(title);
         
         // Status label
         m_statusLabel = CCLabelBMFont::create(
             g_serverRunning ? "Server: Running" : "Server: Stopped",
             "bigFont.fnt"
         );
-        m_statusLabel->setScale(0.5f);
-        m_statusLabel->setPosition(160, 200);
-        layer->addChild(m_statusLabel);
+        m_statusLabel->setScale(0.4f);
+        m_statusLabel->setPosition(winSize.width / 2, winSize.height / 2 + 50);
+        this->addChild(m_statusLabel);
         
-        // Start/Stop button
+        // Buttons
         auto toggleBtn = CCMenuItemSpriteExtra::create(
             ButtonSprite::create(
                 g_serverRunning ? "Stop" : "Start",
                 "goldFont.fnt",
                 "GJ_button_01.png",
-                0.8f
+                0.7f
             ),
             this,
             menu_selector(MCPPanel::onToggleServer)
         );
-        toggleBtn->setPosition(-80, 160);
         
-        // Copy logs button
         auto copyBtn = CCMenuItemSpriteExtra::create(
-            ButtonSprite::create("Copy", "goldFont.fnt", "GJ_button_01.png", 0.8f),
+            ButtonSprite::create("Copy Logs", "goldFont.fnt", "GJ_button_01.png", 0.7f),
             this,
             menu_selector(MCPPanel::onCopyLogs)
         );
-        copyBtn->setPosition(0, 160);
         
-        // Clear logs button
         auto clearBtn = CCMenuItemSpriteExtra::create(
-            ButtonSprite::create("Clear", "goldFont.fnt", "GJ_button_01.png", 0.8f),
+            ButtonSprite::create("Clear", "goldFont.fnt", "GJ_button_01.png", 0.7f),
             this,
             menu_selector(MCPPanel::onClearLogs)
         );
-        clearBtn->setPosition(80, 160);
+        
+        auto closeBtn = CCMenuItemSpriteExtra::create(
+            CCSprite::createWithSpriteFrameName("GJ_closeBtn_001.png"),
+            this,
+            menu_selector(MCPPanel::onClose)
+        );
+        closeBtn->setPosition(winSize.width / 2 + 140, winSize.height / 2 + 90);
         
         m_buttonMenu = CCMenu::create();
         m_buttonMenu->addChild(toggleBtn);
         m_buttonMenu->addChild(copyBtn);
         m_buttonMenu->addChild(clearBtn);
-        m_buttonMenu->setPosition(160, 0);
-        layer->addChild(m_buttonMenu);
+        m_buttonMenu->addChild(closeBtn);
+        
+        toggleBtn->setPosition(-80, 10);
+        copyBtn->setPosition(0, 10);
+        clearBtn->setPosition(80, 10);
+        
+        m_buttonMenu->setPosition(winSize.width / 2, winSize.height / 2);
+        this->addChild(m_buttonMenu);
         
         // Log display
         std::string logText = getLogsText();
         m_logLabel = CCLabelBMFont::create(logText.c_str(), "chatFont.fnt");
-        m_logLabel->setScale(0.4f);
-        m_logLabel->setPosition(160, 80);
-        m_logLabel->setAnchorPoint({0.5f, 0.5f});
+        m_logLabel->setScale(0.35f);
+        m_logLabel->setPosition(winSize.width / 2, winSize.height / 2 - 30);
         m_logLabel->setAlignment(kCCTextAlignmentLeft);
-        layer->addChild(m_logLabel);
+        m_logLabel->setWidth(250);
+        this->addChild(m_logLabel);
+        
+        this->setKeypadEnabled(true);
+        this->setTouchEnabled(true);
         
         return true;
     }
@@ -92,7 +118,7 @@ protected:
         std::lock_guard<std::mutex> lock(g_logMutex);
         std::string result;
         int count = 0;
-        for (auto it = g_mcpLogs.rbegin(); it != g_mcpLogs.rend() && count < 10; ++it, ++count) {
+        for (auto it = g_mcpLogs.rbegin(); it != g_mcpLogs.rend() && count < 8; ++it, ++count) {
             result += *it + "\n";
         }
         if (result.empty()) {
@@ -127,15 +153,25 @@ protected:
     }
     
     void onClearLogs(CCObject*) {
-        std::lock_guard<std::mutex> lock(g_logMutex);
-        g_mcpLogs.clear();
+        {
+            std::lock_guard<std::mutex> lock(g_logMutex);
+            g_mcpLogs.clear();
+        }
         AddMCPLog("[INFO] Logs cleared");
         refreshLogs();
+    }
+    
+    void onClose(CCObject*) {
+        this->removeFromParent();
     }
     
     void refreshLogs() {
         std::string logText = getLogsText();
         m_logLabel->setString(logText.c_str());
+    }
+    
+    void keyBackClicked() override {
+        onClose(nullptr);
     }
     
 public:
@@ -147,5 +183,13 @@ public:
         }
         CC_SAFE_DELETE(ret);
         return nullptr;
+    }
+    
+    static void show() {
+        auto scene = CCDirector::sharedDirector()->getRunningScene();
+        if (scene) {
+            auto panel = MCPPanel::create();
+            scene->addChild(panel, 1000);
+        }
     }
 };
