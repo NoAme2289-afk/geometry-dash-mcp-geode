@@ -20,27 +20,16 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+
+    - name: Build the Geode mod
+      uses: geode-sdk/build-geode-mod@main
       with:
-        submodules: recursive
-
-    - name: Setup Geode CLI
-      uses: geode-sdk/cli/.github/actions/setup@main
-
-    - name: Setup Geode SDK
-      run: |
-        git clone --depth 1 https://github.com/geode-sdk/geode.git ${{ github.workspace }}/geode-sdk
-        cd ${{ github.workspace }}/geode-sdk
-        mkdir -p bin/nightly
-        curl -L https://github.com/geode-sdk/geode/releases/latest/download/Geode-Win.zip -o geode-win.zip
-        unzip -q geode-win.zip -d bin/nightly
-        
-    - name: Build Geode Mod
-      working-directory: geode-mod
-      env:
-        GEODE_SDK: ${{ github.workspace }}/geode-sdk
-      run: |
-        cmake -B build -DCMAKE_BUILD_TYPE=Release
-        cmake --build build --config Release
+        bindings: geode-sdk/bindings
+        bindings-repo: geode-sdk/bindings
+        sdk: nightly
+        configure-args: '-DCMAKE_BUILD_TYPE=Release'
+        build-config: Release
+        target: geode-mod
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
