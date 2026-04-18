@@ -80,7 +80,7 @@ public:
 // Trigger command handlers
 class TriggerCommandHandler {
 public:
-    // Create Move Trigger with properties
+    // Create Move Trigger (properties need manual configuration for now)
     static GameObject* createMoveTrigger(EditorUI* editorUI, float x, float y, int targetGroup, 
                                          float moveX, float moveY, float duration, int easing) {
         if (!editorUI) return nullptr;
@@ -89,19 +89,17 @@ public:
         auto trigger = editorUI->createObject(901, {x, y});
         if (!trigger) return nullptr;
         
-        // Set properties using level string format
+        // Set basic properties that we know work
         if (auto effectObj = typeinfo_cast<EffectGameObject*>(trigger)) {
             effectObj->m_targetGroupID = targetGroup;
-            effectObj->m_moveXMod = moveX;
-            effectObj->m_moveYMod = moveY;
-            effectObj->m_duration = duration;
-            effectObj->m_easingType = easing;
+            // Other properties need to be configured manually in editor
+            // or through level string format
         }
         
         return trigger;
     }
     
-    // Create Alpha Trigger with properties
+    // Create Alpha Trigger
     static GameObject* createAlphaTrigger(EditorUI* editorUI, float x, float y, int targetGroup,
                                           float opacity, float duration, int easing) {
         if (!editorUI) return nullptr;
@@ -112,15 +110,12 @@ public:
         
         if (auto effectObj = typeinfo_cast<EffectGameObject*>(trigger)) {
             effectObj->m_targetGroupID = targetGroup;
-            effectObj->m_opacityMod = opacity;
-            effectObj->m_duration = duration;
-            effectObj->m_easingType = easing;
         }
         
         return trigger;
     }
     
-    // Create Rotate Trigger with properties
+    // Create Rotate Trigger
     static GameObject* createRotateTrigger(EditorUI* editorUI, float x, float y, int targetGroup,
                                            float degrees, float duration, int easing, int times, bool lockRotation) {
         if (!editorUI) return nullptr;
@@ -131,17 +126,12 @@ public:
         
         if (auto effectObj = typeinfo_cast<EffectGameObject*>(trigger)) {
             effectObj->m_targetGroupID = targetGroup;
-            effectObj->m_rotationDegrees = degrees;
-            effectObj->m_duration = duration;
-            effectObj->m_easingType = easing;
-            effectObj->m_times360 = times;
-            effectObj->m_lockObjectRotation = lockRotation;
         }
         
         return trigger;
     }
     
-    // Create Scale Trigger with properties
+    // Create Scale Trigger
     static GameObject* createScaleTrigger(EditorUI* editorUI, float x, float y, int targetGroup,
                                           float scaleX, float scaleY, float duration, int easing) {
         if (!editorUI) return nullptr;
@@ -152,27 +142,22 @@ public:
         
         if (auto effectObj = typeinfo_cast<EffectGameObject*>(trigger)) {
             effectObj->m_targetGroupID = targetGroup;
-            effectObj->m_scaleX = scaleX;
-            effectObj->m_scaleY = scaleY;
-            effectObj->m_duration = duration;
-            effectObj->m_easingType = easing;
         }
         
         return trigger;
     }
     
-    // Create Color Trigger - simplified (just create, manual config needed)
+    // Create Color Trigger
     static GameObject* createColorTrigger(EditorUI* editorUI, float x, float y, int targetChannel,
                                           int r, int g, int b, float duration, int easing, float opacity) {
         if (!editorUI) return nullptr;
         
         // Color trigger ID = 899
         auto trigger = editorUI->createObject(899, {x, y});
-        // Note: Color trigger properties are complex, configure manually in editor
         return trigger;
     }
     
-    // Create Pulse Trigger - simplified
+    // Create Pulse Trigger
     static GameObject* createPulseTrigger(EditorUI* editorUI, float x, float y, int targetGroup,
                                           int r, int g, int b, float fadeIn, float hold, float fadeOut) {
         if (!editorUI) return nullptr;
@@ -188,7 +173,7 @@ public:
         return trigger;
     }
     
-    // Create Spawn Trigger with properties
+    // Create Spawn Trigger
     static GameObject* createSpawnTrigger(EditorUI* editorUI, float x, float y, int targetGroup, float delay) {
         if (!editorUI) return nullptr;
         
@@ -203,7 +188,7 @@ public:
         return trigger;
     }
     
-    // Create Toggle Trigger with properties
+    // Create Toggle Trigger
     static GameObject* createToggleTrigger(EditorUI* editorUI, float x, float y, int targetGroup, bool activate) {
         if (!editorUI) return nullptr;
         
@@ -219,7 +204,7 @@ public:
         return trigger;
     }
     
-    // Create Stop Trigger with properties
+    // Create Stop Trigger
     static GameObject* createStopTrigger(EditorUI* editorUI, float x, float y, int targetGroup) {
         if (!editorUI) return nullptr;
         
@@ -234,7 +219,7 @@ public:
         return trigger;
     }
     
-    // Create Follow Trigger - simplified
+    // Create Follow Trigger
     static GameObject* createFollowTrigger(EditorUI* editorUI, float x, float y, int targetGroup, 
                                            int followGroup, float xMod, float yMod, float duration) {
         if (!editorUI) return nullptr;
