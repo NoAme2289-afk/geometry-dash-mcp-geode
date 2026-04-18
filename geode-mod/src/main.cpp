@@ -197,7 +197,7 @@ class $modify(GDMCPEditorUI, EditorUI) {
     
     void onMCPButton(CCObject*) {
         AddMCPLog("[INFO] MCP panel opened");
-        MCPPanel::create()->show();
+        MCPPanel::show();
     }
 };
 
