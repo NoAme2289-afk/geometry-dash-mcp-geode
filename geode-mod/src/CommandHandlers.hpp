@@ -104,7 +104,7 @@ public:
 // Trigger command handlers
 class TriggerCommandHandler {
 public:
-    // Create Move Trigger (properties need manual configuration for now)
+    // Create Move Trigger with properties
     static GameObject* createMoveTrigger(EditorUI* editorUI, float x, float y, int targetGroup, 
                                          float moveX, float moveY, float duration, int easing) {
         if (!editorUI) return nullptr;
@@ -113,17 +113,18 @@ public:
         auto trigger = editorUI->createObject(901, {x, y});
         if (!trigger) return nullptr;
         
-        // Set basic properties that we know work
+        // Set properties using correct field names from bindings
         if (auto effectObj = typeinfo_cast<EffectGameObject*>(trigger)) {
             effectObj->m_targetGroupID = targetGroup;
-            // Other properties need to be configured manually in editor
-            // or through level string format
+            effectObj->m_moveOffset = cocos2d::CCPoint(moveX, moveY);  // property 28, 29
+            effectObj->m_duration = duration;  // property 10
+            effectObj->m_easingType = static_cast<EasingType>(easing);  // property 30
         }
         
         return trigger;
     }
     
-    // Create Alpha Trigger
+    // Create Alpha Trigger with properties
     static GameObject* createAlphaTrigger(EditorUI* editorUI, float x, float y, int targetGroup,
                                           float opacity, float duration, int easing) {
         if (!editorUI) return nullptr;
@@ -134,12 +135,15 @@ public:
         
         if (auto effectObj = typeinfo_cast<EffectGameObject*>(trigger)) {
             effectObj->m_targetGroupID = targetGroup;
+            effectObj->m_opacity = opacity;  // property 35
+            effectObj->m_duration = duration;  // property 10
+            effectObj->m_easingType = static_cast<EasingType>(easing);  // property 30
         }
         
         return trigger;
     }
     
-    // Create Rotate Trigger
+    // Create Rotate Trigger with properties
     static GameObject* createRotateTrigger(EditorUI* editorUI, float x, float y, int targetGroup,
                                            float degrees, float duration, int easing, int times, bool lockRotation) {
         if (!editorUI) return nullptr;
@@ -150,12 +154,17 @@ public:
         
         if (auto effectObj = typeinfo_cast<EffectGameObject*>(trigger)) {
             effectObj->m_targetGroupID = targetGroup;
+            effectObj->m_rotationDegrees = degrees;  // property 68
+            effectObj->m_duration = duration;  // property 10
+            effectObj->m_easingType = static_cast<EasingType>(easing);  // property 30
+            effectObj->m_times360 = times;  // property 69
+            effectObj->m_lockObjectRotation = lockRotation;  // property 70
         }
         
         return trigger;
     }
     
-    // Create Scale Trigger
+    // Create Scale Trigger with properties
     static GameObject* createScaleTrigger(EditorUI* editorUI, float x, float y, int targetGroup,
                                           float scaleX, float scaleY, float duration, int easing) {
         if (!editorUI) return nullptr;
@@ -166,6 +175,10 @@ public:
         
         if (auto effectObj = typeinfo_cast<EffectGameObject*>(trigger)) {
             effectObj->m_targetGroupID = targetGroup;
+            effectObj->m_scaleX = scaleX;
+            effectObj->m_scaleY = scaleY;
+            effectObj->m_duration = duration;  // property 10
+            effectObj->m_easingType = static_cast<EasingType>(easing);  // property 30
         }
         
         return trigger;
