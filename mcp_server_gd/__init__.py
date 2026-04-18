@@ -158,6 +158,48 @@ def main() -> int:
             return f"Moved objects in group {groupId}"
         else:
             return "Failed to send command"
+    
+    @mcp.tool()
+    def gd_get_level_info() -> str:
+        """Get information about the current level (object counts by type)
+        
+        Returns statistics about the level including total objects, blocks, spikes, portals, orbs, triggers, and decorations.
+        """
+        command = "GET_LEVEL_INFO:"
+        if send_command(command):
+            return "Level info requested. Check Geometry Dash MCP panel for results."
+        else:
+            return "Failed to send command"
+    
+    @mcp.tool()
+    def gd_list_objects() -> str:
+        """List all objects in the current level (first 50 objects)
+        
+        Returns a list of objects with their IDs and positions.
+        """
+        command = "LIST_OBJECTS:"
+        if send_command(command):
+            return "Object list requested. Check Geometry Dash MCP panel for results."
+        else:
+            return "Failed to send command"
+    
+    @mcp.tool()
+    def gd_undo() -> str:
+        """Undo the last action in the editor"""
+        command = "UNDO:"
+        if send_command(command):
+            return "Undo action sent"
+        else:
+            return "Failed to send command"
+    
+    @mcp.tool()
+    def gd_redo() -> str:
+        """Redo the last undone action in the editor"""
+        command = "REDO:"
+        if send_command(command):
+            return "Redo action sent"
+        else:
+            return "Failed to send command"
 
     mcp.run(transport="stdio")
     return 0
