@@ -5,6 +5,9 @@
 
 using namespace geode::prelude;
 
+// Forward declaration
+void ProcessLevelData(LevelEditorLayer* editor, const std::string& levelData);
+
 // Named pipe for IPC with MCP server
 #define PIPE_NAME "\\\\.\\pipe\\gd_mcp_geode_pipe"
 
