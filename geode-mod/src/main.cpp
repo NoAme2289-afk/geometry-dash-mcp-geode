@@ -2,11 +2,13 @@
 #include <Geode/modify/LevelEditorLayer.hpp>
 #include <Geode/modify/EditorUI.hpp>
 #include "MCPPanel.hpp"
+#include "CommandHandlers.hpp"
 
 using namespace geode::prelude;
 
-// Forward declaration
+// Forward declarations
 void ProcessLevelData(LevelEditorLayer* editor, const std::string& levelData);
+void ProcessCommand(LevelEditorLayer* editor, const std::string& command);
 
 // Named pipe for IPC with MCP server
 #define PIPE_NAME "\\\\.\\pipe\\gd_mcp_geode_pipe"
@@ -44,32 +46,28 @@ void IPCThread() {
                 buffer[bytesRead] = '\0';
                 std::string command(buffer);
 
-                // Parse command
-                if (command.find("LOAD_LEVEL:") == 0) {
-                    std::string levelData = command.substr(11);
+                // Parse command - route to appropriate handler
+                log::info("Received command: {}", command.substr(0, 50));
+                AddMCPLog("[INFO] Received command from MCP");
+                
+                // Queue processing in main thread
+                Loader::get()->queueInMainThread([command]() {
+                    log::info("GD-MCP: Processing in main thread");
+                    AddMCPLog("[INFO] Processing in main thread...");
                     
-                    log::info("Received level data: {}", levelData.substr(0, 50));
-                    AddMCPLog("[INFO] Received level data from MCP");
-                    
-                    // Queue processing in main thread
-                    Loader::get()->queueInMainThread([levelData]() {
-                        log::info("GD-MCP: Processing in main thread");
-                        AddMCPLog("[INFO] Processing in main thread...");
-                        
-                        auto editor = LevelEditorLayer::get();
-                        if (editor) {
-                            ProcessLevelData(editor, levelData);
-                        } else {
-                            log::error("GD-MCP: LevelEditorLayer::get() returned null");
-                            AddMCPLog("[ERROR] Editor not found in main thread");
-                        }
-                    });
+                    auto editor = LevelEditorLayer::get();
+                    if (editor) {
+                        ProcessCommand(editor, command);
+                    } else {
+                        log::error("GD-MCP: LevelEditorLayer::get() returned null");
+                        AddMCPLog("[ERROR] Editor not found in main thread");
+                    }
+                });
 
-                    // Send response
-                    const char* response = "OK";
-                    DWORD bytesWritten;
-                    WriteFile(hPipe, response, strlen(response), &bytesWritten, NULL);
-                }
+                // Send response
+                const char* response = "OK";
+                DWORD bytesWritten;
+                WriteFile(hPipe, response, strlen(response), &bytesWritten, NULL);
             }
         }
 
@@ -90,50 +88,72 @@ void ProcessLevelData(LevelEditorLayer* editor, const std::string& levelData) {
     log::info("Level data: {}", levelData);
     AddMCPLog("[INFO] Processing level data...");
 
-    // Parse format: id,x,y;id,x,y;id,x,y
+    auto editorUI = editor->m_editorUI;
+    if (!editorUI) {
+        log::error("EditorUI not found!");
+        AddMCPLog("[ERROR] EditorUI not found!");
+        return;
+    }
+
+    // Parse format: id,x,y,groups,color;id,x,y,groups,color;...
+    // groups format: 1:2:3 (colon separated)
     std::stringstream ss(levelData);
     std::string token;
     int objectCount = 0;
 
     while (std::getline(ss, token, ';')) {
+        if (token.empty()) continue;
+        
         log::info("Processing token: {}", token);
         std::stringstream objStream(token);
-        std::string idStr, xStr, yStr;
+        std::string idStr, xStr, yStr, groupsStr, colorStr;
 
-        if (std::getline(objStream, idStr, ',') &&
-            std::getline(objStream, xStr, ',') &&
-            std::getline(objStream, yStr, ',')) {
+        std::getline(objStream, idStr, ',');
+        std::getline(objStream, xStr, ',');
+        std::getline(objStream, yStr, ',');
+        std::getline(objStream, groupsStr, ',');
+        std::getline(objStream, colorStr, ',');
 
-            try {
-                int objID = std::stoi(idStr);
-                float x = std::stof(xStr);
-                float y = std::stof(yStr);
+        try {
+            int objID = std::stoi(idStr);
+            float x = std::stof(xStr);
+            float y = std::stof(yStr);
 
-                log::info("Attempting to create object: ID={} X={} Y={}", objID, x, y);
+            log::info("Creating object: ID={} X={} Y={}", objID, x, y);
 
-                // Use EditorUI to create object properly
-                if (auto editorUI = editor->m_editorUI) {
-                    auto obj = editorUI->createObject(objID, {x, y});
-                    
-                    if (obj) {
-                        objectCount++;
-                        log::info("SUCCESS: Created object: ID={} X={} Y={}", objID, x, y);
-                        AddMCPLog(fmt::format("[SUCCESS] Created object: ID={} X={} Y={}", objID, x, y));
-                    } else {
-                        log::error("FAILED: createObject returned null for ID={}", objID);
-                        AddMCPLog(fmt::format("[ERROR] Failed to create object ID={}", objID));
+            // Parse groups
+            std::vector<int> groups;
+            if (!groupsStr.empty() && groupsStr != "0") {
+                std::stringstream groupStream(groupsStr);
+                std::string groupID;
+                while (std::getline(groupStream, groupID, ':')) {
+                    if (!groupID.empty()) {
+                        groups.push_back(std::stoi(groupID));
                     }
-                } else {
-                    log::error("EditorUI not found!");
-                    AddMCPLog("[ERROR] EditorUI not found!");
                 }
-            } catch (const std::exception& e) {
-                log::error("Error parsing object: {}", e.what());
-                AddMCPLog(fmt::format("[ERROR] Parse error: {}", e.what()));
             }
-        } else {
-            log::error("Failed to parse token: {}", token);
-            AddMCPLog(fmt::format("[ERROR] Failed to parse: {}", token));
+
+            // Create object with groups
+            auto obj = ObjectCommandHandler::createObjectWithGroups(editorUI, objID, x, y, groups);
+            
+            if (obj) {
+                // Set color if specified
+                if (!colorStr.empty() && colorStr != "0") {
+                    int colorChannel = std::stoi(colorStr);
+                    ObjectCommandHandler::setObjectColor(obj, colorChannel);
+                }
+                
+                objectCount++;
+                log::info("SUCCESS: Created object: ID={} X={} Y={} Groups={} Color={}", 
+                         objID, x, y, groupsStr, colorStr);
+                AddMCPLog(fmt::format("[SUCCESS] Object ID={} at ({},{})", objID, x, y));
+            } else {
+                log::error("FAILED: createObject returned null for ID={}", objID);
+                AddMCPLog(fmt::format("[ERROR] Failed to create object ID={}", objID));
+            }
+        } catch (const std::exception& e) {
+            log::error("Error parsing object: {}", e.what());
+            AddMCPLog(fmt::format("[ERROR] Parse error: {}", e.what()));
         }
     }
 
@@ -141,7 +161,345 @@ void ProcessLevelData(LevelEditorLayer* editor, const std::string& levelData) {
     AddMCPLog(fmt::format("[INFO] Created {} objects", objectCount));
 
     // Refresh editor view
-    if (auto editorUI = editor->m_editorUI) {
+    if (editorUI) {
+        editorUI->updateButtons();
+    }
+}
+
+// Process commands - router for all command types
+void ProcessCommand(LevelEditorLayer* editor, const std::string& command) {
+    if (!editor) {
+        log::error("LevelEditorLayer is null!");
+        AddMCPLog("[ERROR] LevelEditorLayer is null!");
+        return;
+    }
+
+    auto editorUI = editor->m_editorUI;
+    if (!editorUI) {
+        log::error("EditorUI not found!");
+        AddMCPLog("[ERROR] EditorUI not found!");
+        return;
+    }
+
+    // Parse command type
+    size_t colonPos = command.find(':');
+    if (colonPos == std::string::npos) {
+        log::error("Invalid command format: {}", command);
+        AddMCPLog("[ERROR] Invalid command format");
+        return;
+    }
+
+    std::string cmdType = command.substr(0, colonPos);
+    std::string cmdData = command.substr(colonPos + 1);
+
+    log::info("Command type: {}, Data: {}", cmdType, cmdData.substr(0, 50));
+
+    // Route to appropriate handler
+    if (cmdType == "LOAD_LEVEL") {
+        ProcessLevelData(editor, cmdData);
+    }
+    else if (cmdType == "MOVE_TRIGGER") {
+        // Format: x,y,targetGroup,moveX,moveY,duration,easing
+        std::stringstream ss(cmdData);
+        std::string token;
+        std::vector<std::string> params;
+        while (std::getline(ss, token, ',')) {
+            params.push_back(token);
+        }
+        
+        if (params.size() >= 7) {
+            float x = std::stof(params[0]);
+            float y = std::stof(params[1]);
+            int targetGroup = std::stoi(params[2]);
+            float moveX = std::stof(params[3]);
+            float moveY = std::stof(params[4]);
+            float duration = std::stof(params[5]);
+            int easing = std::stoi(params[6]);
+            
+            auto trigger = TriggerCommandHandler::createMoveTrigger(editorUI, x, y, targetGroup, moveX, moveY, duration, easing);
+            if (trigger) {
+                AddMCPLog(fmt::format("[SUCCESS] Created Move Trigger at ({},{})", x, y));
+            } else {
+                AddMCPLog("[ERROR] Failed to create Move Trigger");
+            }
+        }
+    }
+    else if (cmdType == "ALPHA_TRIGGER") {
+        // Format: x,y,targetGroup,opacity,duration,easing
+        std::stringstream ss(cmdData);
+        std::string token;
+        std::vector<std::string> params;
+        while (std::getline(ss, token, ',')) {
+            params.push_back(token);
+        }
+        
+        if (params.size() >= 6) {
+            float x = std::stof(params[0]);
+            float y = std::stof(params[1]);
+            int targetGroup = std::stoi(params[2]);
+            float opacity = std::stof(params[3]);
+            float duration = std::stof(params[4]);
+            int easing = std::stoi(params[5]);
+            
+            auto trigger = TriggerCommandHandler::createAlphaTrigger(editorUI, x, y, targetGroup, opacity, duration, easing);
+            if (trigger) {
+                AddMCPLog(fmt::format("[SUCCESS] Created Alpha Trigger at ({},{})", x, y));
+            } else {
+                AddMCPLog("[ERROR] Failed to create Alpha Trigger");
+            }
+        }
+    }
+    else if (cmdType == "ROTATE_TRIGGER") {
+        // Format: x,y,targetGroup,degrees,duration,easing,times,lockRotation
+        std::stringstream ss(cmdData);
+        std::string token;
+        std::vector<std::string> params;
+        while (std::getline(ss, token, ',')) {
+            params.push_back(token);
+        }
+        
+        if (params.size() >= 8) {
+            float x = std::stof(params[0]);
+            float y = std::stof(params[1]);
+            int targetGroup = std::stoi(params[2]);
+            float degrees = std::stof(params[3]);
+            float duration = std::stof(params[4]);
+            int easing = std::stoi(params[5]);
+            int times = std::stoi(params[6]);
+            bool lockRotation = params[7] == "1" || params[7] == "true";
+            
+            auto trigger = TriggerCommandHandler::createRotateTrigger(editorUI, x, y, targetGroup, degrees, duration, easing, times, lockRotation);
+            if (trigger) {
+                AddMCPLog(fmt::format("[SUCCESS] Created Rotate Trigger at ({},{})", x, y));
+            } else {
+                AddMCPLog("[ERROR] Failed to create Rotate Trigger");
+            }
+        }
+    }
+    else if (cmdType == "SCALE_TRIGGER") {
+        // Format: x,y,targetGroup,scaleX,scaleY,duration,easing
+        std::stringstream ss(cmdData);
+        std::string token;
+        std::vector<std::string> params;
+        while (std::getline(ss, token, ',')) {
+            params.push_back(token);
+        }
+        
+        if (params.size() >= 7) {
+            float x = std::stof(params[0]);
+            float y = std::stof(params[1]);
+            int targetGroup = std::stoi(params[2]);
+            float scaleX = std::stof(params[3]);
+            float scaleY = std::stof(params[4]);
+            float duration = std::stof(params[5]);
+            int easing = std::stoi(params[6]);
+            
+            auto trigger = TriggerCommandHandler::createScaleTrigger(editorUI, x, y, targetGroup, scaleX, scaleY, duration, easing);
+            if (trigger) {
+                AddMCPLog(fmt::format("[SUCCESS] Created Scale Trigger at ({},{})", x, y));
+            } else {
+                AddMCPLog("[ERROR] Failed to create Scale Trigger");
+            }
+        }
+    }
+    else if (cmdType == "COLOR_TRIGGER") {
+        // Format: x,y,targetChannel,r,g,b,duration,easing,opacity
+        std::stringstream ss(cmdData);
+        std::string token;
+        std::vector<std::string> params;
+        while (std::getline(ss, token, ',')) {
+            params.push_back(token);
+        }
+        
+        if (params.size() >= 9) {
+            float x = std::stof(params[0]);
+            float y = std::stof(params[1]);
+            int targetChannel = std::stoi(params[2]);
+            int r = std::stoi(params[3]);
+            int g = std::stoi(params[4]);
+            int b = std::stoi(params[5]);
+            float duration = std::stof(params[6]);
+            int easing = std::stoi(params[7]);
+            float opacity = std::stof(params[8]);
+            
+            auto trigger = TriggerCommandHandler::createColorTrigger(editorUI, x, y, targetChannel, r, g, b, duration, easing, opacity);
+            if (trigger) {
+                AddMCPLog(fmt::format("[SUCCESS] Created Color Trigger at ({},{})", x, y));
+            } else {
+                AddMCPLog("[ERROR] Failed to create Color Trigger");
+            }
+        }
+    }
+    else if (cmdType == "PULSE_TRIGGER") {
+        // Format: x,y,targetGroup,r,g,b,fadeIn,hold,fadeOut
+        std::stringstream ss(cmdData);
+        std::string token;
+        std::vector<std::string> params;
+        while (std::getline(ss, token, ',')) {
+            params.push_back(token);
+        }
+        
+        if (params.size() >= 9) {
+            float x = std::stof(params[0]);
+            float y = std::stof(params[1]);
+            int targetGroup = std::stoi(params[2]);
+            int r = std::stoi(params[3]);
+            int g = std::stoi(params[4]);
+            int b = std::stoi(params[5]);
+            float fadeIn = std::stof(params[6]);
+            float hold = std::stof(params[7]);
+            float fadeOut = std::stof(params[8]);
+            
+            auto trigger = TriggerCommandHandler::createPulseTrigger(editorUI, x, y, targetGroup, r, g, b, fadeIn, hold, fadeOut);
+            if (trigger) {
+                AddMCPLog(fmt::format("[SUCCESS] Created Pulse Trigger at ({},{})", x, y));
+            } else {
+                AddMCPLog("[ERROR] Failed to create Pulse Trigger");
+            }
+        }
+    }
+    else if (cmdType == "SPAWN_TRIGGER") {
+        // Format: x,y,targetGroup,delay
+        std::stringstream ss(cmdData);
+        std::string token;
+        std::vector<std::string> params;
+        while (std::getline(ss, token, ',')) {
+            params.push_back(token);
+        }
+        
+        if (params.size() >= 4) {
+            float x = std::stof(params[0]);
+            float y = std::stof(params[1]);
+            int targetGroup = std::stoi(params[2]);
+            float delay = std::stof(params[3]);
+            
+            auto trigger = TriggerCommandHandler::createSpawnTrigger(editorUI, x, y, targetGroup, delay);
+            if (trigger) {
+                AddMCPLog(fmt::format("[SUCCESS] Created Spawn Trigger at ({},{})", x, y));
+            } else {
+                AddMCPLog("[ERROR] Failed to create Spawn Trigger");
+            }
+        }
+    }
+    else if (cmdType == "TOGGLE_TRIGGER") {
+        // Format: x,y,targetGroup,activate
+        std::stringstream ss(cmdData);
+        std::string token;
+        std::vector<std::string> params;
+        while (std::getline(ss, token, ',')) {
+            params.push_back(token);
+        }
+        
+        if (params.size() >= 4) {
+            float x = std::stof(params[0]);
+            float y = std::stof(params[1]);
+            int targetGroup = std::stoi(params[2]);
+            bool activate = params[3] == "1" || params[3] == "true";
+            
+            auto trigger = TriggerCommandHandler::createToggleTrigger(editorUI, x, y, targetGroup, activate);
+            if (trigger) {
+                AddMCPLog(fmt::format("[SUCCESS] Created Toggle Trigger at ({},{})", x, y));
+            } else {
+                AddMCPLog("[ERROR] Failed to create Toggle Trigger");
+            }
+        }
+    }
+    else if (cmdType == "STOP_TRIGGER") {
+        // Format: x,y,targetGroup
+        std::stringstream ss(cmdData);
+        std::string token;
+        std::vector<std::string> params;
+        while (std::getline(ss, token, ',')) {
+            params.push_back(token);
+        }
+        
+        if (params.size() >= 3) {
+            float x = std::stof(params[0]);
+            float y = std::stof(params[1]);
+            int targetGroup = std::stoi(params[2]);
+            
+            auto trigger = TriggerCommandHandler::createStopTrigger(editorUI, x, y, targetGroup);
+            if (trigger) {
+                AddMCPLog(fmt::format("[SUCCESS] Created Stop Trigger at ({},{})", x, y));
+            } else {
+                AddMCPLog("[ERROR] Failed to create Stop Trigger");
+            }
+        }
+    }
+    else if (cmdType == "FOLLOW_TRIGGER") {
+        // Format: x,y,targetGroup,followGroup,xMod,yMod,duration
+        std::stringstream ss(cmdData);
+        std::string token;
+        std::vector<std::string> params;
+        while (std::getline(ss, token, ',')) {
+            params.push_back(token);
+        }
+        
+        if (params.size() >= 7) {
+            float x = std::stof(params[0]);
+            float y = std::stof(params[1]);
+            int targetGroup = std::stoi(params[2]);
+            int followGroup = std::stoi(params[3]);
+            float xMod = std::stof(params[4]);
+            float yMod = std::stof(params[5]);
+            float duration = std::stof(params[6]);
+            
+            auto trigger = TriggerCommandHandler::createFollowTrigger(editorUI, x, y, targetGroup, followGroup, xMod, yMod, duration);
+            if (trigger) {
+                AddMCPLog(fmt::format("[SUCCESS] Created Follow Trigger at ({},{})", x, y));
+            } else {
+                AddMCPLog("[ERROR] Failed to create Follow Trigger");
+            }
+        }
+    }
+    else if (cmdType == "MOVE_OBJECTS") {
+        // Format: groupID,newX,newY
+        std::stringstream ss(cmdData);
+        std::string token;
+        std::vector<std::string> params;
+        while (std::getline(ss, token, ',')) {
+            params.push_back(token);
+        }
+        
+        if (params.size() >= 3) {
+            int groupID = std::stoi(params[0]);
+            float newX = std::stof(params[1]);
+            float newY = std::stof(params[2]);
+            
+            auto objects = ObjectCommandHandler::findObjectsByGroup(editor, groupID);
+            int movedCount = 0;
+            for (auto obj : objects) {
+                if (ObjectCommandHandler::moveObject(obj, newX, newY)) {
+                    movedCount++;
+                }
+            }
+            
+            AddMCPLog(fmt::format("[SUCCESS] Moved {} objects from group {}", movedCount, groupID));
+            editorUI->updateButtons();
+        }
+    }
+    else if (cmdType == "DELETE_OBJECTS") {
+        // Format: groupID
+        int groupID = std::stoi(cmdData);
+        
+        auto objects = ObjectCommandHandler::findObjectsByGroup(editor, groupID);
+        int deletedCount = 0;
+        for (auto obj : objects) {
+            if (ObjectCommandHandler::deleteObject(editorUI, obj)) {
+                deletedCount++;
+            }
+        }
+        
+        AddMCPLog(fmt::format("[SUCCESS] Deleted {} objects from group {}", deletedCount, groupID));
+        editorUI->updateButtons();
+    }
+    else {
+        log::error("Unknown command type: {}", cmdType);
+        AddMCPLog(fmt::format("[ERROR] Unknown command: {}", cmdType));
+    }
+
+    // Refresh editor view
+    if (editorUI) {
         editorUI->updateButtons();
     }
 }
