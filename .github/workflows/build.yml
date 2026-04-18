@@ -26,13 +26,13 @@ jobs:
     - name: Setup Geode CLI
       uses: geode-sdk/cli/.github/actions/setup@main
 
-    - name: Clone Geode SDK
+    - name: Setup Geode SDK
       run: |
         git clone --depth 1 https://github.com/geode-sdk/geode.git ${{ github.workspace }}/geode-sdk
-        
-    - name: Install Geode SDK Binaries
-      run: |
-        geode sdk install-binaries
+        cd ${{ github.workspace }}/geode-sdk
+        mkdir -p bin/nightly
+        curl -L https://github.com/geode-sdk/geode/releases/latest/download/Geode-Win.zip -o geode-win.zip
+        unzip -q geode-win.zip -d bin/nightly
         
     - name: Build Geode Mod
       working-directory: geode-mod
