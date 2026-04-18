@@ -62,11 +62,10 @@ void IPCThread() {
 }
 
 // Process level data and create objects
-void ProcessLevelData(const std::string& levelData) {
-    auto editor = LevelEditorLayer::get();
+void ProcessLevelData(LevelEditorLayer* editor, const std::string& levelData) {
     if (!editor) {
-        log::error("LevelEditorLayer not found!");
-        AddMCPLog("[ERROR] LevelEditorLayer not found!");
+        log::error("LevelEditorLayer is null!");
+        AddMCPLog("[ERROR] LevelEditorLayer is null!");
         return;
     }
 
@@ -156,7 +155,9 @@ class $modify(GDMCPLevelEditorLayer, LevelEditorLayer) {
 
         // Check if we have new level data to process
         if (g_levelUpdated) {
-            ProcessLevelData(g_currentLevelData);
+            log::info("GD-MCP: g_levelUpdated is true, calling ProcessLevelData");
+            AddMCPLog("[INFO] Processing level update...");
+            ProcessLevelData(this, g_currentLevelData);
             g_levelUpdated = false;
         }
     }
