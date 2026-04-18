@@ -83,12 +83,6 @@ Create a playable Geometry Dash level with platforms, spikes, and an orb
 
 Система успешно экспортировала, визуализировала и проанализировала этот уровень!
 
-## 📚 Документация
-
-- **[USAGE.md](USAGE.md)** - Полное руководство по использованию
-- **[HOT_RELOAD_GUIDE.md](HOT_RELOAD_GUIDE.md)** - Настройка hot-reload
-- **[OFFSETS_GUIDE.md](OFFSETS_GUIDE.md)** - Поиск offsets для GD
-
 ## 🛠️ Доступные инструменты
 
 ### Создание объектов
