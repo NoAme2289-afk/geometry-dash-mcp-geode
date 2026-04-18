@@ -2,7 +2,7 @@
 
 > Полнофункциональная AI-система для создания, анализа и визуализации уровней Geometry Dash!
 
-![Level Preview](preview.png)
+<img src="https://raw.githubusercontent.com/NoAme2289-afk/geometry-dash-mcp-geode/main/preview.png" alt="Level Preview" width="600" />
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Geode](https://img.shields.io/badge/Geode-3.0-blue.svg)](https://geode-sdk.org/)
