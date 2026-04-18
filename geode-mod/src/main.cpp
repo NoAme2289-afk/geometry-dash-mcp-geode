@@ -10,7 +10,8 @@ using namespace geode::prelude;
 
 // Global state
 std::string g_currentLevelData;
-bool g_levelUpdated = false;
+std::atomic<bool> g_levelUpdated(false);
+std::mutex g_dataMutex;
 
 // IPC Thread - listens for commands from MCP server
 void IPCThread() {
@@ -42,10 +43,13 @@ void IPCThread() {
 
                 // Parse command
                 if (command.find("LOAD_LEVEL:") == 0) {
-                    g_currentLevelData = command.substr(11);
-                    g_levelUpdated = true;
+                    {
+                        std::lock_guard<std::mutex> lock(g_dataMutex);
+                        g_currentLevelData = command.substr(11);
+                    }
+                    g_levelUpdated.store(true);
 
-                    log::info("Received level data: {}", g_currentLevelData.substr(0, 50));
+                    log::info("Received level data: {}", command.substr(11, 50));
                     AddMCPLog("[INFO] Received level data from MCP");
 
                     // Send response
@@ -154,11 +158,18 @@ class $modify(GDMCPLevelEditorLayer, LevelEditorLayer) {
         LevelEditorLayer::update(dt);
 
         // Check if we have new level data to process
-        if (g_levelUpdated) {
+        if (g_levelUpdated.load()) {
             log::info("GD-MCP: g_levelUpdated is true, calling ProcessLevelData");
             AddMCPLog("[INFO] Processing level update...");
-            ProcessLevelData(this, g_currentLevelData);
-            g_levelUpdated = false;
+            
+            std::string levelData;
+            {
+                std::lock_guard<std::mutex> lock(g_dataMutex);
+                levelData = g_currentLevelData;
+            }
+            
+            ProcessLevelData(this, levelData);
+            g_levelUpdated.store(false);
         }
     }
 };
