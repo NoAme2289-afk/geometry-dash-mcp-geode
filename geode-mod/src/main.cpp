@@ -67,7 +67,8 @@ void ProcessLevelData(const std::string& levelData) {
         return;
     }
 
-    log::info("Processing level data...");
+    log::info("Processing level data... Editor found!");
+    log::info("Level data: {}", levelData);
 
     // Parse format: id,x,y;id,x,y;id,x,y
     std::stringstream ss(levelData);
@@ -75,6 +76,7 @@ void ProcessLevelData(const std::string& levelData) {
     int objectCount = 0;
 
     while (std::getline(ss, token, ';')) {
+        log::info("Processing token: {}", token);
         std::stringstream objStream(token);
         std::string idStr, xStr, yStr;
 
@@ -87,25 +89,27 @@ void ProcessLevelData(const std::string& levelData) {
                 float x = std::stof(xStr);
                 float y = std::stof(yStr);
 
-                // Create object using Geode API
-                auto obj = GameObject::createWithKey(objID);
+                log::info("Attempting to create object: ID={} X={} Y={}", objID, x, y);
+
+                // Try using objectFromString instead
+                std::string objString = fmt::format("1,{};2,{};3,{}", objID, x, y);
+                auto obj = GameObject::objectFromString(objString, false);
 
                 if (obj) {
-                    // Set position
-                    obj->setPosition(ccp(x, y));
-                    
                     // Add object to editor layer
                     editor->m_objectLayer->addChild(obj);
                     editor->m_objects->addObject(obj);
                     
                     objectCount++;
-                    log::info("Created object: ID={} X={} Y={}", objID, x, y);
+                    log::info("SUCCESS: Created object: ID={} X={} Y={}", objID, x, y);
                 } else {
-                    log::error("Failed to create object with ID: {}", objID);
+                    log::error("FAILED: GameObject::objectFromString returned null for ID={}", objID);
                 }
             } catch (const std::exception& e) {
                 log::error("Error parsing object: {}", e.what());
             }
+        } else {
+            log::error("Failed to parse token: {}", token);
         }
     }
 
