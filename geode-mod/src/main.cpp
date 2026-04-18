@@ -8,10 +8,10 @@ using namespace geode::prelude;
 // Named pipe for IPC with MCP server
 #define PIPE_NAME "\\\\.\\pipe\\gd_mcp_geode_pipe"
 
-// Global state
-std::string g_currentLevelData;
-std::atomic<bool> g_levelUpdated(false);
-std::mutex g_dataMutex;
+// Global state (not needed anymore with queueInMainThread)
+// std::string g_currentLevelData;
+// std::atomic<bool> g_levelUpdated(false);
+// std::mutex g_dataMutex;
 
 // IPC Thread - listens for commands from MCP server
 void IPCThread() {
@@ -43,14 +43,24 @@ void IPCThread() {
 
                 // Parse command
                 if (command.find("LOAD_LEVEL:") == 0) {
-                    {
-                        std::lock_guard<std::mutex> lock(g_dataMutex);
-                        g_currentLevelData = command.substr(11);
-                    }
-                    g_levelUpdated.store(true);
-
-                    log::info("Received level data: {}", command.substr(11, 50));
+                    std::string levelData = command.substr(11);
+                    
+                    log::info("Received level data: {}", levelData.substr(0, 50));
                     AddMCPLog("[INFO] Received level data from MCP");
+                    
+                    // Queue processing in main thread
+                    Loader::get()->queueInMainThread([levelData]() {
+                        log::info("GD-MCP: Processing in main thread");
+                        AddMCPLog("[INFO] Processing in main thread...");
+                        
+                        auto editor = LevelEditorLayer::get();
+                        if (editor) {
+                            ProcessLevelData(editor, levelData);
+                        } else {
+                            log::error("GD-MCP: LevelEditorLayer::get() returned null");
+                            AddMCPLog("[ERROR] Editor not found in main thread");
+                        }
+                    });
 
                     // Send response
                     const char* response = "OK";
@@ -152,25 +162,6 @@ class $modify(GDMCPLevelEditorLayer, LevelEditorLayer) {
         }
 
         return true;
-    }
-
-    void update(float dt) {
-        LevelEditorLayer::update(dt);
-
-        // Check if we have new level data to process
-        if (g_levelUpdated.load()) {
-            log::info("GD-MCP: g_levelUpdated is true, calling ProcessLevelData");
-            AddMCPLog("[INFO] Processing level update...");
-            
-            std::string levelData;
-            {
-                std::lock_guard<std::mutex> lock(g_dataMutex);
-                levelData = g_currentLevelData;
-            }
-            
-            ProcessLevelData(this, levelData);
-            g_levelUpdated.store(false);
-        }
     }
 };
 
