@@ -736,6 +736,11 @@ void ProcessCommand(LevelEditorLayer* editor, const std::string& command) {
             AddMCPLog("[ERROR] Failed to redo");
         }
     }
+    else if (cmdType == "EXPORT_LEVEL") {
+        // Export level to JSON
+        std::string json = ObjectCommandHandler::exportLevelToJSON(editorUI);
+        AddMCPLog(json);
+    }
     else {
         log::error("Unknown command type: {}", cmdType);
         AddMCPLog(fmt::format("[ERROR] Unknown command: {}", cmdType));

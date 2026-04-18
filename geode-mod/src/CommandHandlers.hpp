@@ -274,6 +274,45 @@ public:
         editor->redoLastAction();
         return true;
     }
+    
+    // Export level to JSON (all objects with positions, IDs, rotations, scales)
+    static std::string exportLevelToJSON(EditorUI* editorUI) {
+        if (!editorUI) return "{\"error\":\"No editor\"}";
+        
+        auto editor = editorUI->m_editorLayer;
+        if (!editor) return "{\"error\":\"No editor layer\"}";
+        
+        auto objects = editor->m_objects;
+        if (!objects) return "{\"error\":\"No objects array\"}";
+        
+        std::string json = "{\"objects\":[";
+        int totalObjects = objects->count();
+        
+        for (int i = 0; i < totalObjects; i++) {
+            auto obj = static_cast<GameObject*>(objects->objectAtIndex(i));
+            if (!obj) continue;
+            
+            auto pos = obj->getPosition();
+            float rotation = obj->getRotation();
+            float scaleX = obj->getScaleX();
+            float scaleY = obj->getScaleY();
+            int objID = obj->m_objectID;
+            
+            json += "{";
+            json += "\"id\":" + std::to_string(objID) + ",";
+            json += "\"x\":" + std::to_string(pos.x) + ",";
+            json += "\"y\":" + std::to_string(pos.y) + ",";
+            json += "\"rotation\":" + std::to_string(rotation) + ",";
+            json += "\"scaleX\":" + std::to_string(scaleX) + ",";
+            json += "\"scaleY\":" + std::to_string(scaleY);
+            json += "}";
+            
+            if (i < totalObjects - 1) json += ",";
+        }
+        
+        json += "]}";
+        return json;
+    }
 };
 
 // Trigger command handlers
