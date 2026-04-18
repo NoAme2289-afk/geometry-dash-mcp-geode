@@ -433,9 +433,6 @@ public:
         int triggers = 0;
         int decorations = 0;
         
-        // Track used groups
-        std::set<int> usedGroups;
-        
         for (int i = 0; i < totalObjects; i++) {
             auto obj = static_cast<GameObject*>(objects->objectAtIndex(i));
             if (!obj) continue;
@@ -449,13 +446,6 @@ public:
             else if (objID >= 36 && objID <= 1751) orbs++;
             else if (objID >= 899 && objID <= 3602) triggers++;
             else decorations++;
-            
-            // Collect groups
-            if (obj->m_groups) {
-                for (int j = 0; j < obj->m_groups->count(); j++) {
-                    usedGroups.insert(obj->m_groups->objectAtIndex(j));
-                }
-            }
         }
         
         std::string result = "LEVEL_INFO:";
@@ -466,7 +456,6 @@ public:
         result += ",orbs=" + std::to_string(orbs);
         result += ",triggers=" + std::to_string(triggers);
         result += ",decorations=" + std::to_string(decorations);
-        result += ",groups=" + std::to_string(usedGroups.size());
         
         return result;
     }
@@ -482,7 +471,7 @@ public:
         if (!objects) return "ERROR: No objects array";
         
         std::string result = "OBJECTS_LIST:";
-        int count = std::min(limit, objects->count());
+        int count = limit < objects->count() ? limit : objects->count();
         
         for (int i = 0; i < count; i++) {
             auto obj = static_cast<GameObject*>(objects->objectAtIndex(i));
@@ -520,17 +509,6 @@ public:
         if (!editor) return false;
         
         editor->redoLastAction();
-        return true;
-    }
-    
-    // Save level
-    static bool saveLevel(EditorUI* editorUI) {
-        if (!editorUI) return false;
-        
-        auto editor = editorUI->m_editorLayer;
-        if (!editor) return false;
-        
-        editor->saveLevel();
         return true;
     }
 };

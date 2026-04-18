@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mcp-server-gd"
+version = "1.0.0"
+description = "MCP server for Geometry Dash level editor control"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp>=1.0.0",
+    "pywin32"
+]
+
+[project.scripts]
+mcp-server-gd = "mcp_server_gd:main"

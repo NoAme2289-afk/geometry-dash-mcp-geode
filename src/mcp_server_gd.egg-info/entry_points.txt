@@ -1,0 +1,2 @@
+[console_scripts]
+mcp-server-gd = mcp_server_gd:main
