@@ -15,7 +15,7 @@
 	"links": {
 		"community": "https://discord.gg/geometrydash"
 	},
-	"dependencies": [],
+	"dependencies": {},
 	"tags": ["editor", "utility", "automation"],
 	"settings": {}
 }
