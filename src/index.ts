@@ -8,7 +8,7 @@ import {
   Tool,
 } from "@modelcontextprotocol/sdk/types.js";
 import { GDLevel, GDObject, ObjectType } from "./types.js";
-import { encodeLevelString, createBasicLevel } from "./level-encoder.js";
+import { encodeLevelString, createBasicLevel, encodeForInjection } from "./level-encoder.js";
 import { IPCClient } from "./ipc-client.js";
 
 const server = new Server(
@@ -242,8 +242,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       try {
-        const levelString = encodeLevelString(level);
-        const success = await ipcClient.loadLevel(levelString);
+        // Use simple format for DLL injection: id,x,y;id,x,y
+        const injectionData = encodeForInjection(level);
+        const success = await ipcClient.loadLevel(injectionData);
         
         if (success) {
           return {

@@ -1,0 +1,20 @@
+{
+  "name": "GD-MCP Geode Development",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.cpptools",
+        "ms-vscode.cmake-tools",
+        "twxs.cmake"
+      ],
+      "settings": {
+        "cmake.configureOnOpen": true
+      }
+    }
+  },
+  "postCreateCommand": "cd geode-mod && cmake -B build -DCMAKE_BUILD_TYPE=Release",
+  "remoteUser": "root"
+}

@@ -1,0 +1,21 @@
+{
+	"geode": "v3.0.0",
+	"gd": {
+		"win": "2.206",
+		"android": "2.206",
+		"mac": "2.206",
+		"ios": "2.206"
+	},
+	"version": "v1.0.0",
+	"id": "noame2289.gdmcp",
+	"name": "GD-MCP",
+	"developer": "NoAme2289",
+	"description": "MCP integration for Geometry Dash - create levels with AI!",
+	"repository": "https://github.com/NoAme2289-afk/geometry-dash-mcp-geode",
+	"links": {
+		"community": "https://discord.gg/geometrydash"
+	},
+	"dependencies": [],
+	"tags": ["editor", "utility", "automation"],
+	"settings": {}
+}
