@@ -113,7 +113,7 @@ void ProcessLevelData(LevelEditorLayer* editor, const std::string& levelData) {
 
                 // Use EditorUI to create object properly
                 if (auto editorUI = editor->m_editorUI) {
-                    auto obj = editorUI->createObject(objID, {x, y}, false);
+                    auto obj = editorUI->createObject(objID, {x, y});
                     
                     if (obj) {
                         objectCount++;
