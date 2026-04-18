@@ -200,6 +200,15 @@ def main() -> int:
             return "Redo action sent"
         else:
             return "Failed to send command"
+    
+    @mcp.tool()
+    def gd_export_level() -> str:
+        """Export the current level data to JSON (check MCP panel in GD for output)"""
+        command = "EXPORT_LEVEL:"
+        if send_command(command):
+            return "Export level command sent. Check the MCP panel in Geometry Dash for JSON output."
+        else:
+            return "Failed to send command"
 
     @mcp.tool()
     def gd_render_level(output_path: str = None) -> str:
