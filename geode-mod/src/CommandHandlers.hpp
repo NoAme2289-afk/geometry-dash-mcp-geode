@@ -99,6 +99,82 @@ public:
         
         return nullptr;
     }
+    
+    // Copy objects from a group
+    static std::vector<GameObject*> copyObjectsFromGroup(LevelEditorLayer* editor, int groupID) {
+        return findObjectsByGroup(editor, groupID);
+    }
+    
+    // Paste objects with offset
+    static int pasteObjects(EditorUI* editorUI, const std::vector<GameObject*>& objects, float offsetX, float offsetY) {
+        if (!editorUI) return 0;
+        
+        int pastedCount = 0;
+        for (auto obj : objects) {
+            if (!obj) continue;
+            
+            auto pos = obj->getPosition();
+            auto newObj = editorUI->createObject(obj->m_objectID, {pos.x + offsetX, pos.y + offsetY});
+            
+            if (newObj) {
+                // Copy groups
+                if (obj->m_groups) {
+                    for (int i = 0; i < obj->m_groups->size(); i++) {
+                        newObj->addToGroup(obj->m_groups->at(i));
+                    }
+                }
+                pastedCount++;
+            }
+        }
+        
+        return pastedCount;
+    }
+    
+    // Batch set scale for group
+    static int batchSetScale(LevelEditorLayer* editor, int groupID, float scaleX, float scaleY) {
+        auto objects = findObjectsByGroup(editor, groupID);
+        int count = 0;
+        
+        for (auto obj : objects) {
+            if (obj) {
+                obj->setScaleX(scaleX);
+                obj->setScaleY(scaleY);
+                count++;
+            }
+        }
+        
+        return count;
+    }
+    
+    // Batch set rotation for group
+    static int batchSetRotation(LevelEditorLayer* editor, int groupID, float rotation) {
+        auto objects = findObjectsByGroup(editor, groupID);
+        int count = 0;
+        
+        for (auto obj : objects) {
+            if (obj) {
+                obj->setRotation(rotation);
+                count++;
+            }
+        }
+        
+        return count;
+    }
+    
+    // Batch add to group
+    static int batchAddToGroup(LevelEditorLayer* editor, int sourceGroup, int targetGroup) {
+        auto objects = findObjectsByGroup(editor, sourceGroup);
+        int count = 0;
+        
+        for (auto obj : objects) {
+            if (obj) {
+                obj->addToGroup(targetGroup);
+                count++;
+            }
+        }
+        
+        return count;
+    }
 };
 
 // Trigger command handlers
@@ -267,6 +343,71 @@ public:
         
         if (auto effectObj = typeinfo_cast<EffectGameObject*>(trigger)) {
             effectObj->m_targetGroupID = targetGroup;
+        }
+        
+        return trigger;
+    }
+    
+    // Create Shake Trigger
+    static GameObject* createShakeTrigger(EditorUI* editorUI, float x, float y, float strength, float interval, float duration) {
+        if (!editorUI) return nullptr;
+        
+        // Shake trigger ID = 1520
+        auto trigger = editorUI->createObject(1520, {x, y});
+        if (!trigger) return nullptr;
+        
+        if (auto effectObj = typeinfo_cast<EffectGameObject*>(trigger)) {
+            effectObj->m_shakeStrength = strength;  // property 75
+            effectObj->m_shakeInterval = interval;  // property 84
+            effectObj->m_duration = duration;
+        }
+        
+        return trigger;
+    }
+    
+    // Create Camera Offset Trigger
+    static GameObject* createCameraOffsetTrigger(EditorUI* editorUI, float x, float y, float offsetX, float offsetY, float duration, int easing) {
+        if (!editorUI) return nullptr;
+        
+        // Camera offset trigger ID = 1914
+        auto trigger = editorUI->createObject(1914, {x, y});
+        if (!trigger) return nullptr;
+        
+        if (auto effectObj = typeinfo_cast<EffectGameObject*>(trigger)) {
+            effectObj->m_moveOffset = cocos2d::CCPoint(offsetX, offsetY);
+            effectObj->m_duration = duration;
+            effectObj->m_easingType = static_cast<EasingType>(easing);
+        }
+        
+        return trigger;
+    }
+    
+    // Create Static Camera Trigger
+    static GameObject* createStaticCameraTrigger(EditorUI* editorUI, float x, float y, bool enable, float duration) {
+        if (!editorUI) return nullptr;
+        
+        // Static camera trigger ID = 1917
+        auto trigger = editorUI->createObject(1917, {x, y});
+        if (!trigger) return nullptr;
+        
+        if (auto effectObj = typeinfo_cast<EffectGameObject*>(trigger)) {
+            effectObj->m_duration = duration;
+        }
+        
+        return trigger;
+    }
+    
+    // Create Zoom Trigger (Camera Zoom)
+    static GameObject* createZoomTrigger(EditorUI* editorUI, float x, float y, float zoom, float duration, int easing) {
+        if (!editorUI) return nullptr;
+        
+        // Camera zoom trigger ID = 1916
+        auto trigger = editorUI->createObject(1916, {x, y});
+        if (!trigger) return nullptr;
+        
+        if (auto effectObj = typeinfo_cast<EffectGameObject*>(trigger)) {
+            effectObj->m_duration = duration;
+            effectObj->m_easingType = static_cast<EasingType>(easing);
         }
         
         return trigger;

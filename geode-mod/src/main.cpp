@@ -555,6 +555,161 @@ void ProcessCommand(LevelEditorLayer* editor, const std::string& command) {
             }
         }
     }
+    else if (cmdType == "COPY_OBJECTS") {
+        // Format: groupID
+        int groupID = std::stoi(cmdData);
+        
+        auto objects = ObjectCommandHandler::copyObjectsFromGroup(editor, groupID);
+        AddMCPLog(fmt::format("[SUCCESS] Copied {} objects from group {}", objects.size(), groupID));
+    }
+    else if (cmdType == "PASTE_OBJECTS") {
+        // Format: groupID,offsetX,offsetY
+        std::stringstream ss(cmdData);
+        std::string token;
+        std::vector<std::string> params;
+        while (std::getline(ss, token, ',')) {
+            params.push_back(token);
+        }
+        
+        if (params.size() >= 3) {
+            int groupID = std::stoi(params[0]);
+            float offsetX = std::stof(params[1]);
+            float offsetY = std::stof(params[2]);
+            
+            auto objects = ObjectCommandHandler::copyObjectsFromGroup(editor, groupID);
+            int pastedCount = ObjectCommandHandler::pasteObjects(editorUI, objects, offsetX, offsetY);
+            
+            AddMCPLog(fmt::format("[SUCCESS] Pasted {} objects with offset ({},{})", pastedCount, offsetX, offsetY));
+            editorUI->updateButtons();
+        }
+    }
+    else if (cmdType == "BATCH_SCALE") {
+        // Format: groupID,scaleX,scaleY
+        std::stringstream ss(cmdData);
+        std::string token;
+        std::vector<std::string> params;
+        while (std::getline(ss, token, ',')) {
+            params.push_back(token);
+        }
+        
+        if (params.size() >= 3) {
+            int groupID = std::stoi(params[0]);
+            float scaleX = std::stof(params[1]);
+            float scaleY = std::stof(params[2]);
+            
+            int count = ObjectCommandHandler::batchSetScale(editor, groupID, scaleX, scaleY);
+            AddMCPLog(fmt::format("[SUCCESS] Scaled {} objects in group {}", count, groupID));
+            editorUI->updateButtons();
+        }
+    }
+    else if (cmdType == "BATCH_ROTATE") {
+        // Format: groupID,rotation
+        std::stringstream ss(cmdData);
+        std::string token;
+        std::vector<std::string> params;
+        while (std::getline(ss, token, ',')) {
+            params.push_back(token);
+        }
+        
+        if (params.size() >= 2) {
+            int groupID = std::stoi(params[0]);
+            float rotation = std::stof(params[1]);
+            
+            int count = ObjectCommandHandler::batchSetRotation(editor, groupID, rotation);
+            AddMCPLog(fmt::format("[SUCCESS] Rotated {} objects in group {}", count, groupID));
+            editorUI->updateButtons();
+        }
+    }
+    else if (cmdType == "BATCH_ADD_GROUP") {
+        // Format: sourceGroup,targetGroup
+        std::stringstream ss(cmdData);
+        std::string token;
+        std::vector<std::string> params;
+        while (std::getline(ss, token, ',')) {
+            params.push_back(token);
+        }
+        
+        if (params.size() >= 2) {
+            int sourceGroup = std::stoi(params[0]);
+            int targetGroup = std::stoi(params[1]);
+            
+            int count = ObjectCommandHandler::batchAddToGroup(editor, sourceGroup, targetGroup);
+            AddMCPLog(fmt::format("[SUCCESS] Added {} objects from group {} to group {}", count, sourceGroup, targetGroup));
+        }
+    }
+    else if (cmdType == "SHAKE_TRIGGER") {
+        // Format: x,y,strength,interval,duration
+        std::stringstream ss(cmdData);
+        std::string token;
+        std::vector<std::string> params;
+        while (std::getline(ss, token, ',')) {
+            params.push_back(token);
+        }
+        
+        if (params.size() >= 5) {
+            float x = std::stof(params[0]);
+            float y = std::stof(params[1]);
+            float strength = std::stof(params[2]);
+            float interval = std::stof(params[3]);
+            float duration = std::stof(params[4]);
+            
+            auto trigger = TriggerCommandHandler::createShakeTrigger(editorUI, x, y, strength, interval, duration);
+            if (trigger) {
+                AddMCPLog(fmt::format("[SUCCESS] Created Shake Trigger at ({},{})", x, y));
+            } else {
+                AddMCPLog("[ERROR] Failed to create Shake Trigger");
+            }
+        }
+    }
+    else if (cmdType == "CAMERA_OFFSET_TRIGGER") {
+        // Format: x,y,offsetX,offsetY,duration,easing
+        std::stringstream ss(cmdData);
+        std::string token;
+        std::vector<std::string> params;
+        while (std::getline(ss, token, ',')) {
+            params.push_back(token);
+        }
+        
+        if (params.size() >= 6) {
+            float x = std::stof(params[0]);
+            float y = std::stof(params[1]);
+            float offsetX = std::stof(params[2]);
+            float offsetY = std::stof(params[3]);
+            float duration = std::stof(params[4]);
+            int easing = std::stoi(params[5]);
+            
+            auto trigger = TriggerCommandHandler::createCameraOffsetTrigger(editorUI, x, y, offsetX, offsetY, duration, easing);
+            if (trigger) {
+                AddMCPLog(fmt::format("[SUCCESS] Created Camera Offset Trigger at ({},{})", x, y));
+            } else {
+                AddMCPLog("[ERROR] Failed to create Camera Offset Trigger");
+            }
+        }
+    }
+    else if (cmdType == "ZOOM_TRIGGER") {
+        // Format: x,y,zoom,duration,easing
+        std::stringstream ss(cmdData);
+        std::string token;
+        std::vector<std::string> params;
+        while (std::getline(ss, token, ',')) {
+            params.push_back(token);
+        }
+        
+        if (params.size() >= 5) {
+            float x = std::stof(params[0]);
+            float y = std::stof(params[1]);
+            float zoom = std::stof(params[2]);
+            float duration = std::stof(params[3]);
+            int easing = std::stoi(params[4]);
+            
+            auto trigger = TriggerCommandHandler::createZoomTrigger(editorUI, x, y, zoom, duration, easing);
+            if (trigger) {
+                AddMCPLog(fmt::format("[SUCCESS] Created Zoom Trigger at ({},{})", x, y));
+            } else {
+                AddMCPLog("[ERROR] Failed to create Zoom Trigger");
+            }
+        }
+    }
     else {
         log::error("Unknown command type: {}", cmdType);
         AddMCPLog(fmt::format("[ERROR] Unknown command: {}", cmdType));
