@@ -6,16 +6,16 @@
 		"mac": "2.2081",
 		"ios": "2.2081"
 	},
-	"version": "v1.0.0",
+	"version": "v1.0.1",
 	"id": "noame2289.gdmcp",
-	"name": "GD-MCP",
+	"name": "GDMCP",
 	"developer": "NoAme2289",
-	"description": "MCP integration for Geometry Dash - create levels with AI!",
+	"description": "AI-powered level creation system for Geometry Dash via MCP",
 	"repository": "https://github.com/NoAme2289-afk/geometry-dash-mcp-geode",
 	"links": {
 		"community": "https://discord.gg/geometrydash"
 	},
 	"dependencies": {},
-	"tags": ["editor", "utility", "automation"],
+	"tags": ["editor", "utility", "automation", "ai"],
 	"settings": {}
 }
