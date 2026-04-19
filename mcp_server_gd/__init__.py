@@ -586,78 +586,20 @@ def main() -> int:
         Args:
             comment: Description of this version
         """
-        import os
-        import json
-        from datetime import datetime
-        
-        # Export current level
-        if send_command("EXPORT_LEVEL"):
-            time.sleep(0.5)
-            
-            try:
-                handle = win32file.CreateFile(
-                    PIPE_NAME,
-                    win32file.GENERIC_READ | win32file.GENERIC_WRITE,
-                    0, None,
-                    win32file.OPEN_EXISTING,
-                    0, None
-                )
-                
-                result, data = win32file.ReadFile(handle, 64 * 1024)
-                win32file.CloseHandle(handle)
-                
-                json_data = data.decode('utf-8').strip()
-                
-                # Create versions directory
-                versions_dir = os.path.join(os.path.expanduser("~"), "Desktop", "gd_versions")
-                os.makedirs(versions_dir, exist_ok=True)
-                
-                # Save version with timestamp
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                version_file = os.path.join(versions_dir, f"version_{timestamp}.json")
-                
-                version_data = {
-                    "timestamp": timestamp,
-                    "comment": comment,
-                    "level_data": json.loads(json_data)
-                }
-                
-                with open(version_file, 'w') as f:
-                    json.dump(version_data, f, indent=2)
-                
-                return f"Version saved: {version_file}"
-                
-            except Exception as e:
-                return f"Failed to save version: {str(e)}"
+        command = f"SAVE_VERSION:{comment}"
+        if send_command(command):
+            return f"Version save requested with comment: {comment}"
         else:
-            return "Failed to export level"
+            return "Failed to send command"
 
     @mcp.tool()
     def gd_list_versions() -> str:
         """List all saved versions of the level"""
-        import os
-        import json
-        
-        versions_dir = os.path.join(os.path.expanduser("~"), "Desktop", "gd_versions")
-        
-        if not os.path.exists(versions_dir):
-            return "No versions found. Use gd_save_version to create one."
-        
-        versions = []
-        for filename in sorted(os.listdir(versions_dir), reverse=True):
-            if filename.endswith('.json'):
-                filepath = os.path.join(versions_dir, filename)
-                try:
-                    with open(filepath, 'r') as f:
-                        data = json.load(f)
-                        versions.append(f"{filename}: {data.get('comment', 'No comment')}")
-                except:
-                    pass
-        
-        if versions:
-            return "Versions:\n" + "\n".join(versions[:10])  # Show last 10
+        command = "LIST_VERSIONS:"
+        if send_command(command):
+            return "Version list requested. Check MCP panel for results."
         else:
-            return "No versions found"
+            return "Failed to send command"
 
     @mcp.tool()
     def gd_restore_version(version_filename: str) -> str:
@@ -666,29 +608,11 @@ def main() -> int:
         Args:
             version_filename: Filename of version to restore (e.g. version_20260419_141530.json)
         """
-        import os
-        import json
-        
-        versions_dir = os.path.join(os.path.expanduser("~"), "Desktop", "gd_versions")
-        version_file = os.path.join(versions_dir, version_filename)
-        
-        if not os.path.exists(version_file):
-            return f"Version file not found: {version_filename}"
-        
-        try:
-            with open(version_file, 'r') as f:
-                version_data = json.load(f)
-            
-            level_json = json.dumps(version_data['level_data'])
-            command = f"IMPORT_LEVEL:{level_json}"
-            
-            if send_command(command):
-                return f"Restored version: {version_data.get('comment', 'No comment')}"
-            else:
-                return "Failed to send restore command"
-                
-        except Exception as e:
-            return f"Failed to restore version: {str(e)}"
+        command = f"RESTORE_VERSION:{version_filename}"
+        if send_command(command):
+            return f"Restore version requested: {version_filename}"
+        else:
+            return "Failed to send command"
 
     @mcp.tool()
     def gd_export_section(startX: float, endX: float, filename: str) -> str:
