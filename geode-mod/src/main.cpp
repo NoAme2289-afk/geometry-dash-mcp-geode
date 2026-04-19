@@ -751,6 +751,266 @@ void ProcessCommand(LevelEditorLayer* editor, const std::string& command) {
             AddMCPLog(fmt::format("[INFO] Exported to: {}", desktopPath));
         }
     }
+    else if (cmdType == "PULSE_TRIGGER") {
+        // Format: x,y,targetGroup,r,g,b,fadeIn,hold,fadeOut
+        std::stringstream ss(cmdData);
+        std::string token;
+        std::vector<std::string> params;
+        while (std::getline(ss, token, ',')) {
+            params.push_back(token);
+        }
+        
+        if (params.size() >= 9) {
+            float x = std::stof(params[0]);
+            float y = std::stof(params[1]);
+            int targetGroup = std::stoi(params[2]);
+            int r = std::stoi(params[3]);
+            int g = std::stoi(params[4]);
+            int b = std::stoi(params[5]);
+            float fadeIn = std::stof(params[6]);
+            float hold = std::stof(params[7]);
+            float fadeOut = std::stof(params[8]);
+            
+            auto trigger = TriggerCommandHandler::createPulseTrigger(editorUI, x, y, targetGroup, r, g, b, fadeIn, hold, fadeOut);
+            if (trigger) {
+                AddMCPLog(fmt::format("[SUCCESS] Created Pulse Trigger at ({},{})", x, y));
+            } else {
+                AddMCPLog("[ERROR] Failed to create Pulse Trigger");
+            }
+        }
+    }
+    else if (cmdType == "COLOR_TRIGGER") {
+        // Format: x,y,colorChannel,r,g,b,duration,blending
+        std::stringstream ss(cmdData);
+        std::string token;
+        std::vector<std::string> params;
+        while (std::getline(ss, token, ',')) {
+            params.push_back(token);
+        }
+        
+        if (params.size() >= 8) {
+            float x = std::stof(params[0]);
+            float y = std::stof(params[1]);
+            int colorChannel = std::stoi(params[2]);
+            int r = std::stoi(params[3]);
+            int g = std::stoi(params[4]);
+            int b = std::stoi(params[5]);
+            float duration = std::stof(params[6]);
+            int blending = std::stoi(params[7]);
+            
+            auto trigger = TriggerCommandHandler::createColorTrigger(editorUI, x, y, colorChannel, r, g, b, duration, blending, 1.0f);
+            if (trigger) {
+                AddMCPLog(fmt::format("[SUCCESS] Created Color Trigger at ({},{})", x, y));
+            } else {
+                AddMCPLog("[ERROR] Failed to create Color Trigger");
+            }
+        }
+    }
+    else if (cmdType == "SPAWN_TRIGGER") {
+        // Format: x,y,targetGroup,delay
+        std::stringstream ss(cmdData);
+        std::string token;
+        std::vector<std::string> params;
+        while (std::getline(ss, token, ',')) {
+            params.push_back(token);
+        }
+        
+        if (params.size() >= 4) {
+            float x = std::stof(params[0]);
+            float y = std::stof(params[1]);
+            int targetGroup = std::stoi(params[2]);
+            float delay = std::stof(params[3]);
+            
+            auto trigger = TriggerCommandHandler::createSpawnTrigger(editorUI, x, y, targetGroup, delay);
+            if (trigger) {
+                AddMCPLog(fmt::format("[SUCCESS] Created Spawn Trigger at ({},{})", x, y));
+            } else {
+                AddMCPLog("[ERROR] Failed to create Spawn Trigger");
+            }
+        }
+    }
+    else if (cmdType == "ANIMATE_TRIGGER") {
+        // Format: x,y,targetGroup,animationId
+        std::stringstream ss(cmdData);
+        std::string token;
+        std::vector<std::string> params;
+        while (std::getline(ss, token, ',')) {
+            params.push_back(token);
+        }
+        
+        if (params.size() >= 4) {
+            float x = std::stof(params[0]);
+            float y = std::stof(params[1]);
+            int targetGroup = std::stoi(params[2]);
+            int animationId = std::stoi(params[3]);
+            
+            // Animate trigger ID = 3006
+            auto trigger = editorUI->createObject(3006, {x, y});
+            if (trigger) {
+                if (auto effectObj = typeinfo_cast<EffectGameObject*>(trigger)) {
+                    effectObj->m_targetGroupID = targetGroup;
+                }
+                AddMCPLog(fmt::format("[SUCCESS] Created Animate Trigger at ({},{})", x, y));
+            } else {
+                AddMCPLog("[ERROR] Failed to create Animate Trigger");
+            }
+        }
+    }
+    else if (cmdType == "COPY_OBJECTS") {
+        // Format: groupId
+        int groupId = std::stoi(cmdData);
+        auto objects = ObjectCommandHandler::findObjectsByGroup(editor, groupId);
+        AddMCPLog(fmt::format("[SUCCESS] Copied {} objects from group {}", objects.size(), groupId));
+    }
+    else if (cmdType == "ROTATE_OBJECTS") {
+        // Format: groupId,degrees,centerX,centerY
+        std::stringstream ss(cmdData);
+        std::string token;
+        std::vector<std::string> params;
+        while (std::getline(ss, token, ',')) {
+            params.push_back(token);
+        }
+        
+        if (params.size() >= 4) {
+            int groupId = std::stoi(params[0]);
+            float degrees = std::stof(params[1]);
+            float centerX = std::stof(params[2]);
+            float centerY = std::stof(params[3]);
+            
+            int count = ObjectCommandHandler::batchSetRotation(editor, groupId, degrees);
+            AddMCPLog(fmt::format("[SUCCESS] Rotated {} objects in group {}", count, groupId));
+            editorUI->updateButtons();
+        }
+    }
+    else if (cmdType == "SCALE_OBJECTS") {
+        // Format: groupId,scaleX,scaleY,centerX,centerY
+        std::stringstream ss(cmdData);
+        std::string token;
+        std::vector<std::string> params;
+        while (std::getline(ss, token, ',')) {
+            params.push_back(token);
+        }
+        
+        if (params.size() >= 5) {
+            int groupId = std::stoi(params[0]);
+            float scaleX = std::stof(params[1]);
+            float scaleY = std::stof(params[2]);
+            
+            int count = ObjectCommandHandler::batchSetScale(editor, groupId, scaleX, scaleY);
+            AddMCPLog(fmt::format("[SUCCESS] Scaled {} objects in group {}", count, groupId));
+            editorUI->updateButtons();
+        }
+    }
+    else if (cmdType == "FLIP_OBJECTS") {
+        // Format: groupId,flipX,flipY
+        std::stringstream ss(cmdData);
+        std::string token;
+        std::vector<std::string> params;
+        while (std::getline(ss, token, ',')) {
+            params.push_back(token);
+        }
+        
+        if (params.size() >= 3) {
+            int groupId = std::stoi(params[0]);
+            int flipX = std::stoi(params[1]);
+            int flipY = std::stoi(params[2]);
+            
+            auto objects = ObjectCommandHandler::findObjectsByGroup(editor, groupId);
+            int count = 0;
+            for (auto obj : objects) {
+                if (obj) {
+                    if (flipX) obj->setFlipX(!obj->isFlipX());
+                    if (flipY) obj->setFlipY(!obj->isFlipY());
+                    count++;
+                }
+            }
+            AddMCPLog(fmt::format("[SUCCESS] Flipped {} objects in group {}", count, groupId));
+            editorUI->updateButtons();
+        }
+    }
+    else if (cmdType == "GET_OBJECTS_BY_GROUP") {
+        // Format: groupId
+        int groupId = std::stoi(cmdData);
+        auto objects = ObjectCommandHandler::findObjectsByGroup(editor, groupId);
+        AddMCPLog(fmt::format("[INFO] Found {} objects in group {}", objects.size(), groupId));
+    }
+    else if (cmdType == "BATCH_CREATE") {
+        // Format: objectId,positions,groups,colorChannel
+        // positions format: x1,y1;x2,y2;x3,y3
+        std::stringstream ss(cmdData);
+        std::string token;
+        std::vector<std::string> params;
+        while (std::getline(ss, token, ',')) {
+            params.push_back(token);
+        }
+        
+        if (params.size() >= 2) {
+            int objectId = std::stoi(params[0]);
+            std::string positions = params[1];
+            
+            // Parse positions
+            std::stringstream posStream(positions);
+            std::string posToken;
+            int created = 0;
+            while (std::getline(posStream, posToken, ';')) {
+                std::stringstream coordStream(posToken);
+                std::string xStr, yStr;
+                if (std::getline(coordStream, xStr, ',') && std::getline(coordStream, yStr, ',')) {
+                    float x = std::stof(xStr);
+                    float y = std::stof(yStr);
+                    auto obj = editorUI->createObject(objectId, {x, y});
+                    if (obj) created++;
+                }
+            }
+            AddMCPLog(fmt::format("[SUCCESS] Batch created {} objects", created));
+            editorUI->updateButtons();
+        }
+    }
+    else if (cmdType == "PATTERN_GENERATOR") {
+        // Format: patternType,startX,startY,count,spacing,objectId
+        std::stringstream ss(cmdData);
+        std::string token;
+        std::vector<std::string> params;
+        while (std::getline(ss, token, ',')) {
+            params.push_back(token);
+        }
+        
+        if (params.size() >= 6) {
+            std::string patternType = params[0];
+            float startX = std::stof(params[1]);
+            float startY = std::stof(params[2]);
+            int count = std::stoi(params[3]);
+            float spacing = std::stof(params[4]);
+            int objectId = std::stoi(params[5]);
+            
+            int created = 0;
+            if (patternType == "line") {
+                for (int i = 0; i < count; i++) {
+                    auto obj = editorUI->createObject(objectId, {startX + i * spacing, startY});
+                    if (obj) created++;
+                }
+            } else if (patternType == "grid") {
+                int gridSize = (int)sqrt(count);
+                for (int i = 0; i < gridSize; i++) {
+                    for (int j = 0; j < gridSize; j++) {
+                        auto obj = editorUI->createObject(objectId, {startX + i * spacing, startY + j * spacing});
+                        if (obj) created++;
+                    }
+                }
+            } else if (patternType == "circle") {
+                float radius = spacing;
+                for (int i = 0; i < count; i++) {
+                    float angle = (2.0f * 3.14159f * i) / count;
+                    float x = startX + radius * cos(angle);
+                    float y = startY + radius * sin(angle);
+                    auto obj = editorUI->createObject(objectId, {x, y});
+                    if (obj) created++;
+                }
+            }
+            AddMCPLog(fmt::format("[SUCCESS] Generated {} pattern with {} objects", patternType, created));
+            editorUI->updateButtons();
+        }
+    }
     else {
         log::error("Unknown command type: {}", cmdType);
         AddMCPLog(fmt::format("[ERROR] Unknown command: {}", cmdType));

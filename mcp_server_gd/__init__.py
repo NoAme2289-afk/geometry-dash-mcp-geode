@@ -48,6 +48,74 @@ def main() -> int:
             return "Failed to send command. Make sure Geometry Dash is running and in editor."
 
     @mcp.tool()
+    def gd_create_text(x: float, y: float, text: str, scale: float = 1.0, groups: str = "0") -> str:
+        """Create a text object in the level
+        
+        Args:
+            x: X position
+            y: Y position
+            text: Text content
+            scale: Text scale (default 1.0)
+            groups: Groups separated by colon
+        """
+        command = f"CREATE_TEXT:{x},{y},{text},{scale},{groups}"
+        if send_command(command):
+            return f"Created text '{text}' at ({x}, {y})"
+        else:
+            return "Failed to send command"
+
+    @mcp.tool()
+    def gd_create_item_counter(x: float, y: float, itemId: int, groups: str = "0") -> str:
+        """Create an item counter display
+        
+        Args:
+            x: X position
+            y: Y position
+            itemId: Item ID to count
+            groups: Groups separated by colon
+        """
+        command = f"CREATE_ITEM_COUNTER:{x},{y},{itemId},{groups}"
+        if send_command(command):
+            return f"Created item counter for item {itemId} at ({x}, {y})"
+        else:
+            return "Failed to send command"
+
+    @mcp.tool()
+    def gd_create_collision_block(x: float, y: float, width: float, height: float, blockId: int, groups: str = "0") -> str:
+        """Create a collision block
+        
+        Args:
+            x: X position
+            y: Y position
+            width: Block width
+            height: Block height
+            blockId: Block ID for collision detection
+            groups: Groups separated by colon
+        """
+        command = f"CREATE_COLLISION_BLOCK:{x},{y},{width},{height},{blockId},{groups}"
+        if send_command(command):
+            return f"Created collision block at ({x}, {y})"
+        else:
+            return "Failed to send command"
+
+    @mcp.tool()
+    def gd_create_teleport_portal(x: float, y: float, targetX: float, targetY: float, groups: str = "0") -> str:
+        """Create a teleport portal
+        
+        Args:
+            x: Portal X position
+            y: Portal Y position
+            targetX: Target X position
+            targetY: Target Y position
+            groups: Groups separated by colon
+        """
+        command = f"CREATE_TELEPORT_PORTAL:{x},{y},{targetX},{targetY},{groups}"
+        if send_command(command):
+            return f"Created teleport portal at ({x}, {y}) to ({targetX}, {targetY})"
+        else:
+            return "Failed to send command"
+
+    @mcp.tool()
     def gd_move_trigger(x: float, y: float, targetGroup: int, moveX: float, moveY: float, duration: float, easing: int = 0) -> str:
         """Create a Move Trigger to move objects in a group
         
@@ -124,6 +192,146 @@ def main() -> int:
             return "Failed to send command"
 
     @mcp.tool()
+    def gd_pulse_trigger(x: float, y: float, targetGroup: int, r: int, g: int, b: int, fadeIn: float, hold: float, fadeOut: float) -> str:
+        """Create a Pulse Trigger to pulse color of objects
+        
+        Args:
+            x: Trigger X position
+            y: Trigger Y position
+            targetGroup: Target group ID
+            r: Red (0-255)
+            g: Green (0-255)
+            b: Blue (0-255)
+            fadeIn: Fade in time in seconds
+            hold: Hold time in seconds
+            fadeOut: Fade out time in seconds
+        """
+        command = f"PULSE_TRIGGER:{x},{y},{targetGroup},{r},{g},{b},{fadeIn},{hold},{fadeOut}"
+        if send_command(command):
+            return f"Created Pulse Trigger for group {targetGroup}"
+        else:
+            return "Failed to send command"
+
+    @mcp.tool()
+    def gd_color_trigger(x: float, y: float, colorChannel: int, r: int, g: int, b: int, duration: float, blending: int = 0) -> str:
+        """Create a Color Trigger to change color channel
+        
+        Args:
+            x: Trigger X position
+            y: Trigger Y position
+            colorChannel: Color channel ID (1-999)
+            r: Red (0-255)
+            g: Green (0-255)
+            b: Blue (0-255)
+            duration: Duration in seconds
+            blending: Blending mode (0=normal, 1=additive)
+        """
+        command = f"COLOR_TRIGGER:{x},{y},{colorChannel},{r},{g},{b},{duration},{blending}"
+        if send_command(command):
+            return f"Created Color Trigger for channel {colorChannel}"
+        else:
+            return "Failed to send command"
+
+    @mcp.tool()
+    def gd_follow_trigger(x: float, y: float, targetGroup: int, followGroup: int, xMod: float = 1.0, yMod: float = 1.0, duration: float = 0.0) -> str:
+        """Create a Follow Trigger to make one group follow another
+        
+        Args:
+            x: Trigger X position
+            y: Trigger Y position
+            targetGroup: Target group ID (group that will move)
+            followGroup: Follow group ID (group to follow)
+            xMod: X modifier (default 1.0)
+            yMod: Y modifier (default 1.0)
+            duration: Duration in seconds (0 = instant)
+        """
+        command = f"FOLLOW_TRIGGER:{x},{y},{targetGroup},{followGroup},{xMod},{yMod},{duration}"
+        if send_command(command):
+            return f"Created Follow Trigger: group {targetGroup} follows group {followGroup}"
+        else:
+            return "Failed to send command"
+
+    @mcp.tool()
+    def gd_spawn_trigger(x: float, y: float, targetGroup: int, delay: float = 0.0) -> str:
+        """Create a Spawn Trigger to spawn objects in a group
+        
+        Args:
+            x: Trigger X position
+            y: Trigger Y position
+            targetGroup: Target group ID to spawn
+            delay: Delay in seconds before spawning
+        """
+        command = f"SPAWN_TRIGGER:{x},{y},{targetGroup},{delay}"
+        if send_command(command):
+            return f"Created Spawn Trigger for group {targetGroup}"
+        else:
+            return "Failed to send command"
+
+    @mcp.tool()
+    def gd_stop_trigger(x: float, y: float, targetGroup: int) -> str:
+        """Create a Stop Trigger to stop all triggers affecting a group
+        
+        Args:
+            x: Trigger X position
+            y: Trigger Y position
+            targetGroup: Target group ID to stop
+        """
+        command = f"STOP_TRIGGER:{x},{y},{targetGroup}"
+        if send_command(command):
+            return f"Created Stop Trigger for group {targetGroup}"
+        else:
+            return "Failed to send command"
+
+    @mcp.tool()
+    def gd_toggle_trigger(x: float, y: float, targetGroup: int, activate: int = 1) -> str:
+        """Create a Toggle Trigger to show/hide objects in a group
+        
+        Args:
+            x: Trigger X position
+            y: Trigger Y position
+            targetGroup: Target group ID
+            activate: 1 to show, 0 to hide
+        """
+        command = f"TOGGLE_TRIGGER:{x},{y},{targetGroup},{activate}"
+        if send_command(command):
+            return f"Created Toggle Trigger for group {targetGroup}"
+        else:
+            return "Failed to send command"
+
+    @mcp.tool()
+    def gd_shake_trigger(x: float, y: float, strength: float, interval: float, duration: float) -> str:
+        """Create a Shake Trigger to shake the camera
+        
+        Args:
+            x: Trigger X position
+            y: Trigger Y position
+            strength: Shake strength (0.0-1.0)
+            interval: Shake interval in seconds
+            duration: Duration in seconds
+        """
+        command = f"SHAKE_TRIGGER:{x},{y},{strength},{interval},{duration}"
+        if send_command(command):
+            return f"Created Shake Trigger with strength {strength}"
+        else:
+            return "Failed to send command"
+
+    @mcp.tool()
+    def gd_animate_trigger(x: float, y: float, targetGroup: int, animationId: int) -> str:
+        """Create an Animate Trigger to animate objects
+        
+        Args:
+            x: Trigger X position
+            y: Trigger Y position
+            targetGroup: Target group ID
+            animationId: Animation ID (1-10)
+        """
+        command = f"ANIMATE_TRIGGER:{x},{y},{targetGroup},{animationId}"
+        if send_command(command):
+            return f"Created Animate Trigger for group {targetGroup}"
+        else:
+            return "Failed to send command"
+
+    @mcp.tool()
     def gd_delete_all() -> str:
         """Delete all objects from the level"""
         if send_command("DELETE_ALL:"):
@@ -158,6 +366,81 @@ def main() -> int:
             return f"Moved objects in group {groupId}"
         else:
             return "Failed to send command"
+
+    @mcp.tool()
+    def gd_copy_objects(groupId: int) -> str:
+        """Copy all objects in a group to clipboard
+        
+        Args:
+            groupId: Group ID to copy
+        """
+        command = f"COPY_OBJECTS:{groupId}"
+        if send_command(command):
+            return f"Copied objects in group {groupId}"
+        else:
+            return "Failed to send command"
+
+    @mcp.tool()
+    def gd_paste_objects(x: float, y: float) -> str:
+        """Paste copied objects at position
+        
+        Args:
+            x: X position to paste
+            y: Y position to paste
+        """
+        command = f"PASTE_OBJECTS:{x},{y}"
+        if send_command(command):
+            return f"Pasted objects at ({x}, {y})"
+        else:
+            return "Failed to send command"
+
+    @mcp.tool()
+    def gd_rotate_objects(groupId: int, degrees: float, centerX: float = 0.0, centerY: float = 0.0) -> str:
+        """Rotate all objects in a group around a center point
+        
+        Args:
+            groupId: Group ID to rotate
+            degrees: Rotation degrees
+            centerX: Center X position (default 0)
+            centerY: Center Y position (default 0)
+        """
+        command = f"ROTATE_OBJECTS:{groupId},{degrees},{centerX},{centerY}"
+        if send_command(command):
+            return f"Rotated objects in group {groupId} by {degrees} degrees"
+        else:
+            return "Failed to send command"
+
+    @mcp.tool()
+    def gd_scale_objects(groupId: int, scaleX: float, scaleY: float, centerX: float = 0.0, centerY: float = 0.0) -> str:
+        """Scale all objects in a group from a center point
+        
+        Args:
+            groupId: Group ID to scale
+            scaleX: Scale X factor
+            scaleY: Scale Y factor
+            centerX: Center X position (default 0)
+            centerY: Center Y position (default 0)
+        """
+        command = f"SCALE_OBJECTS:{groupId},{scaleX},{scaleY},{centerX},{centerY}"
+        if send_command(command):
+            return f"Scaled objects in group {groupId}"
+        else:
+            return "Failed to send command"
+
+    @mcp.tool()
+    def gd_flip_objects(groupId: int, flipX: int = 1, flipY: int = 0) -> str:
+        """Flip all objects in a group horizontally and/or vertically
+        
+        Args:
+            groupId: Group ID to flip
+            flipX: Flip horizontally (1=yes, 0=no)
+            flipY: Flip vertically (1=yes, 0=no)
+        """
+        command = f"FLIP_OBJECTS:{groupId},{flipX},{flipY}"
+        if send_command(command):
+            return f"Flipped objects in group {groupId}"
+        else:
+            return "Failed to send command"
     
     @mcp.tool()
     def gd_get_level_info() -> str:
@@ -180,6 +463,103 @@ def main() -> int:
         command = "LIST_OBJECTS:"
         if send_command(command):
             return "Object list requested. Check Geometry Dash MCP panel for results."
+        else:
+            return "Failed to send command"
+
+    @mcp.tool()
+    def gd_get_objects_by_group(groupId: int) -> str:
+        """Get all objects in a specific group
+        
+        Args:
+            groupId: Group ID to query
+        """
+        command = f"GET_OBJECTS_BY_GROUP:{groupId}"
+        if send_command(command):
+            return f"Requested objects in group {groupId}. Check MCP panel for results."
+        else:
+            return "Failed to send command"
+
+    @mcp.tool()
+    def gd_get_triggers_by_type(triggerType: str) -> str:
+        """Get all triggers of a specific type
+        
+        Args:
+            triggerType: Trigger type (move, rotate, scale, alpha, pulse, color, etc.)
+        """
+        command = f"GET_TRIGGERS_BY_TYPE:{triggerType}"
+        if send_command(command):
+            return f"Requested {triggerType} triggers. Check MCP panel for results."
+        else:
+            return "Failed to send command"
+
+    @mcp.tool()
+    def gd_validate_level() -> str:
+        """Validate the level for common errors and issues
+        
+        Returns validation report with warnings and errors.
+        """
+        command = "VALIDATE_LEVEL:"
+        if send_command(command):
+            return "Level validation requested. Check MCP panel for results."
+        else:
+            return "Failed to send command"
+
+    @mcp.tool()
+    def gd_get_level_statistics() -> str:
+        """Get detailed statistics about the level
+        
+        Returns comprehensive statistics including object counts, trigger counts, group usage, etc.
+        """
+        command = "GET_LEVEL_STATISTICS:"
+        if send_command(command):
+            return "Level statistics requested. Check MCP panel for results."
+        else:
+            return "Failed to send command"
+
+    @mcp.tool()
+    def gd_batch_create(objectId: int, positions: str, groups: str = "0", colorChannel: int = 0) -> str:
+        """Batch create multiple objects at once
+        
+        Args:
+            objectId: Object ID to create
+            positions: Positions as "x1,y1;x2,y2;x3,y3"
+            groups: Groups separated by colon
+            colorChannel: Color channel
+        """
+        command = f"BATCH_CREATE:{objectId},{positions},{groups},{colorChannel}"
+        if send_command(command):
+            return f"Batch created objects with ID {objectId}"
+        else:
+            return "Failed to send command"
+
+    @mcp.tool()
+    def gd_pattern_generator(patternType: str, startX: float, startY: float, count: int, spacing: float, objectId: int = 1) -> str:
+        """Generate pattern of objects
+        
+        Args:
+            patternType: Pattern type (line, circle, grid, wave)
+            startX: Start X position
+            startY: Start Y position
+            count: Number of objects
+            spacing: Spacing between objects
+            objectId: Object ID to use (default 1=block)
+        """
+        command = f"PATTERN_GENERATOR:{patternType},{startX},{startY},{count},{spacing},{objectId}"
+        if send_command(command):
+            return f"Generated {patternType} pattern with {count} objects"
+        else:
+            return "Failed to send command"
+
+    @mcp.tool()
+    def gd_import_level(json_data: str) -> str:
+        """Import level from JSON data
+        
+        Args:
+            json_data: JSON string containing level data
+        """
+        command = f"IMPORT_LEVEL:{json_data}"
+        if send_command(command):
+            return "Level import started. Check MCP panel for results."
         else:
             return "Failed to send command"
     
