@@ -6,6 +6,7 @@ Provides tools for controlling Geometry Dash editor via named pipe.
 __all__ = ("main",)
 
 import win32file
+import time
 from mcp.server.fastmcp import FastMCP
 
 PIPE_NAME = r'\\.\pipe\gd_mcp_geode_pipe'
