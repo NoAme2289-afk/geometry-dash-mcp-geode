@@ -10,12 +10,17 @@
 	"id": "gdmcp",
 	"name": "GDMCP",
 	"developer": "NoAme2289",
-	"description": "AI-powered level creation system for Geometry Dash via MCP",
+	"description": "AI-powered level creation system for Geometry Dash via MCP. 60+ commands for creating, optimizing, and managing levels with advanced triggers, version control, auto-backup, and collaboration tools.",
 	"repository": "https://github.com/NoAme2289-afk/geometry-dash-mcp-geode",
 	"links": {
-		"community": "https://discord.gg/geometrydash"
+		"community": "https://discord.gg/geometrydash",
+		"homepage": "https://github.com/NoAme2289-afk/geometry-dash-mcp-geode"
 	},
 	"dependencies": {},
-	"tags": ["editor", "utility", "automation", "ai"],
-	"settings": {}
+	"tags": ["editor", "utility", "automation", "ai", "mcp", "level-creation"],
+	"settings": {},
+	"resources": {
+		"sprites": [],
+		"files": []
+	}
 }
