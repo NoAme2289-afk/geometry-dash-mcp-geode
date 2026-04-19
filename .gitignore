@@ -32,8 +32,8 @@ gd-cli.py
 
 # Temporary files
 *.jpg
-*.png
 *.json.bak
+!preview.png
 opencode.json
 
 # Old/unused files
