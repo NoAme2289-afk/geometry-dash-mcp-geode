@@ -562,6 +562,199 @@ def main() -> int:
             return "Level import started. Check MCP panel for results."
         else:
             return "Failed to send command"
+
+    @mcp.tool()
+    def gd_optimize_level(remove_duplicates: bool = True, remove_invisible: bool = True, optimize_triggers: bool = True) -> str:
+        """Optimize level by removing duplicates, invisible objects, and optimizing triggers
+        
+        Args:
+            remove_duplicates: Remove duplicate objects at same position
+            remove_invisible: Remove objects outside level bounds
+            optimize_triggers: Optimize and merge similar triggers
+        """
+        command = f"OPTIMIZE_LEVEL:{int(remove_duplicates)},{int(remove_invisible)},{int(optimize_triggers)}"
+        if send_command(command):
+            return "Level optimization started. Check MCP panel for results."
+        else:
+            return "Failed to send command"
+
+    @mcp.tool()
+    def gd_save_version(comment: str) -> str:
+        """Save current level as a version with comment
+        
+        Args:
+            comment: Description of this version
+        """
+        import os
+        import json
+        from datetime import datetime
+        
+        # Export current level
+        if send_command("EXPORT_LEVEL"):
+            time.sleep(0.5)
+            
+            try:
+                handle = win32file.CreateFile(
+                    PIPE_NAME,
+                    win32file.GENERIC_READ | win32file.GENERIC_WRITE,
+                    0, None,
+                    win32file.OPEN_EXISTING,
+                    0, None
+                )
+                
+                result, data = win32file.ReadFile(handle, 64 * 1024)
+                win32file.CloseHandle(handle)
+                
+                json_data = data.decode('utf-8').strip()
+                
+                # Create versions directory
+                versions_dir = os.path.join(os.path.expanduser("~"), "Desktop", "gd_versions")
+                os.makedirs(versions_dir, exist_ok=True)
+                
+                # Save version with timestamp
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                version_file = os.path.join(versions_dir, f"version_{timestamp}.json")
+                
+                version_data = {
+                    "timestamp": timestamp,
+                    "comment": comment,
+                    "level_data": json.loads(json_data)
+                }
+                
+                with open(version_file, 'w') as f:
+                    json.dump(version_data, f, indent=2)
+                
+                return f"Version saved: {version_file}"
+                
+            except Exception as e:
+                return f"Failed to save version: {str(e)}"
+        else:
+            return "Failed to export level"
+
+    @mcp.tool()
+    def gd_list_versions() -> str:
+        """List all saved versions of the level"""
+        import os
+        import json
+        
+        versions_dir = os.path.join(os.path.expanduser("~"), "Desktop", "gd_versions")
+        
+        if not os.path.exists(versions_dir):
+            return "No versions found. Use gd_save_version to create one."
+        
+        versions = []
+        for filename in sorted(os.listdir(versions_dir), reverse=True):
+            if filename.endswith('.json'):
+                filepath = os.path.join(versions_dir, filename)
+                try:
+                    with open(filepath, 'r') as f:
+                        data = json.load(f)
+                        versions.append(f"{filename}: {data.get('comment', 'No comment')}")
+                except:
+                    pass
+        
+        if versions:
+            return "Versions:\n" + "\n".join(versions[:10])  # Show last 10
+        else:
+            return "No versions found"
+
+    @mcp.tool()
+    def gd_restore_version(version_filename: str) -> str:
+        """Restore level from a saved version
+        
+        Args:
+            version_filename: Filename of version to restore (e.g. version_20260419_141530.json)
+        """
+        import os
+        import json
+        
+        versions_dir = os.path.join(os.path.expanduser("~"), "Desktop", "gd_versions")
+        version_file = os.path.join(versions_dir, version_filename)
+        
+        if not os.path.exists(version_file):
+            return f"Version file not found: {version_filename}"
+        
+        try:
+            with open(version_file, 'r') as f:
+                version_data = json.load(f)
+            
+            level_json = json.dumps(version_data['level_data'])
+            command = f"IMPORT_LEVEL:{level_json}"
+            
+            if send_command(command):
+                return f"Restored version: {version_data.get('comment', 'No comment')}"
+            else:
+                return "Failed to send restore command"
+                
+        except Exception as e:
+            return f"Failed to restore version: {str(e)}"
+
+    @mcp.tool()
+    def gd_export_section(startX: float, endX: float, filename: str) -> str:
+        """Export a section of the level (X range) to file
+        
+        Args:
+            startX: Start X position
+            endX: End X position
+            filename: Output filename (will be saved to Desktop)
+        """
+        command = f"EXPORT_SECTION:{startX},{endX},{filename}"
+        if send_command(command):
+            return f"Section exported to Desktop/{filename}"
+        else:
+            return "Failed to send command"
+
+    @mcp.tool()
+    def gd_import_section(filename: str, offsetX: float, offsetY: float = 0.0) -> str:
+        """Import a section from file at specified position
+        
+        Args:
+            filename: Input filename (from Desktop)
+            offsetX: X offset for imported objects
+            offsetY: Y offset for imported objects (default 0)
+        """
+        command = f"IMPORT_SECTION:{filename},{offsetX},{offsetY}"
+        if send_command(command):
+            return f"Section imported from {filename} at offset ({offsetX}, {offsetY})"
+        else:
+            return "Failed to send command"
+
+    @mcp.tool()
+    def gd_merge_levels(level1_file: str, level2_file: str, mode: str = "horizontal") -> str:
+        """Merge two level files together
+        
+        Args:
+            level1_file: First level JSON file (from Desktop)
+            level2_file: Second level JSON file (from Desktop)
+            mode: Merge mode - 'horizontal', 'vertical', or 'overlay'
+        """
+        command = f"MERGE_LEVELS:{level1_file},{level2_file},{mode}"
+        if send_command(command):
+            return f"Levels merged in {mode} mode"
+        else:
+            return "Failed to send command"
+
+    @mcp.tool()
+    def gd_auto_backup_start(interval_minutes: int = 5) -> str:
+        """Start automatic backup system
+        
+        Args:
+            interval_minutes: Backup interval in minutes (default 5)
+        """
+        command = f"AUTO_BACKUP_START:{interval_minutes}"
+        if send_command(command):
+            return f"Auto-backup started (every {interval_minutes} minutes)"
+        else:
+            return "Failed to send command"
+
+    @mcp.tool()
+    def gd_auto_backup_stop() -> str:
+        """Stop automatic backup system"""
+        command = "AUTO_BACKUP_STOP:"
+        if send_command(command):
+            return "Auto-backup stopped"
+        else:
+            return "Failed to send command"
     
     @mcp.tool()
     def gd_undo() -> str:

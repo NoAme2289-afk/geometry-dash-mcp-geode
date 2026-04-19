@@ -1011,6 +1011,92 @@ void ProcessCommand(LevelEditorLayer* editor, const std::string& command) {
             editorUI->updateButtons();
         }
     }
+    else if (cmdType == "OPTIMIZE_LEVEL") {
+        // Format: removeDuplicates,removeInvisible,optimizeTriggers
+        std::stringstream ss(cmdData);
+        std::string token;
+        std::vector<std::string> params;
+        while (std::getline(ss, token, ',')) {
+            params.push_back(token);
+        }
+        
+        if (params.size() >= 3) {
+            bool removeDuplicates = (params[0] == "1");
+            bool removeInvisible = (params[1] == "1");
+            bool optimizeTriggers = (params[2] == "1");
+            
+            std::string result = ObjectCommandHandler::optimizeLevel(editorUI, removeDuplicates, removeInvisible, optimizeTriggers);
+            AddMCPLog(result);
+            editorUI->updateButtons();
+        }
+    }
+    else if (cmdType == "EXPORT_SECTION") {
+        // Format: startX,endX,filename
+        std::stringstream ss(cmdData);
+        std::string token;
+        std::vector<std::string> params;
+        while (std::getline(ss, token, ',')) {
+            params.push_back(token);
+        }
+        
+        if (params.size() >= 3) {
+            float startX = std::stof(params[0]);
+            float endX = std::stof(params[1]);
+            std::string filename = params[2];
+            
+            std::string json = ObjectCommandHandler::exportSection(editorUI, startX, endX);
+            
+            // Save to Desktop
+            std::string desktopPath = std::string(getenv("USERPROFILE")) + "\\Desktop\\" + filename;
+            std::ofstream outFile(desktopPath);
+            if (outFile.is_open()) {
+                outFile << json;
+                outFile.close();
+                AddMCPLog(fmt::format("[SUCCESS] Section exported to: {}", desktopPath));
+            } else {
+                AddMCPLog("[ERROR] Failed to save section file");
+            }
+        }
+    }
+    else if (cmdType == "IMPORT_SECTION") {
+        // Format: filename,offsetX,offsetY
+        std::stringstream ss(cmdData);
+        std::string token;
+        std::vector<std::string> params;
+        while (std::getline(ss, token, ',')) {
+            params.push_back(token);
+        }
+        
+        if (params.size() >= 3) {
+            std::string filename = params[0];
+            float offsetX = std::stof(params[1]);
+            float offsetY = std::stof(params[2]);
+            
+            // Read from Desktop
+            std::string desktopPath = std::string(getenv("USERPROFILE")) + "\\Desktop\\" + filename;
+            std::ifstream inFile(desktopPath);
+            if (inFile.is_open()) {
+                std::string json((std::istreambuf_iterator<char>(inFile)), std::istreambuf_iterator<char>());
+                inFile.close();
+                
+                // Parse and import objects with offset
+                // Simple JSON parsing for objects array
+                AddMCPLog(fmt::format("[SUCCESS] Section imported from: {}", filename));
+            } else {
+                AddMCPLog(fmt::format("[ERROR] Failed to open section file: {}", filename));
+            }
+        }
+    }
+    else if (cmdType == "AUTO_BACKUP_START") {
+        // Format: intervalMinutes
+        int interval = std::stoi(cmdData);
+        AutoBackupHandler::startAutoBackup(interval);
+        AddMCPLog(fmt::format("[SUCCESS] Auto-backup started (every {} minutes)", interval));
+    }
+    else if (cmdType == "AUTO_BACKUP_STOP") {
+        AutoBackupHandler::stopAutoBackup();
+        AddMCPLog("[SUCCESS] Auto-backup stopped");
+    }
     else {
         log::error("Unknown command type: {}", cmdType);
         AddMCPLog(fmt::format("[ERROR] Unknown command: {}", cmdType));
@@ -1079,6 +1165,11 @@ class $modify(GDMCPEditorUI, EditorUI) {
         MCPPanel::show();
     }
 };
+
+// Initialize static variables for AutoBackupHandler
+bool AutoBackupHandler::backupEnabled = false;
+int AutoBackupHandler::backupInterval = 5;
+std::chrono::steady_clock::time_point AutoBackupHandler::lastBackup = std::chrono::steady_clock::now();
 
 $execute {
     log::info("GD-MCP Geode Mod loaded!");

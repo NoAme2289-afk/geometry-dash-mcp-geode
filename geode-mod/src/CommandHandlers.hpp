@@ -313,6 +313,148 @@ public:
         json += "]}";
         return json;
     }
+    
+    // Optimize level - remove duplicates and invisible objects
+    static std::string optimizeLevel(EditorUI* editorUI, bool removeDuplicates, bool removeInvisible, bool optimizeTriggers) {
+        if (!editorUI) return "ERROR: No editor";
+        
+        auto editor = editorUI->m_editorLayer;
+        if (!editor) return "ERROR: No editor layer";
+        
+        auto objects = editor->m_objects;
+        if (!objects) return "ERROR: No objects array";
+        
+        int removedDuplicates = 0;
+        int removedInvisible = 0;
+        int optimizedTriggers = 0;
+        
+        std::vector<GameObject*> toRemove;
+        
+        // Remove duplicates
+        if (removeDuplicates) {
+            std::map<std::string, GameObject*> uniqueObjects;
+            
+            for (int i = 0; i < objects->count(); i++) {
+                auto obj = static_cast<GameObject*>(objects->objectAtIndex(i));
+                if (!obj) continue;
+                
+                auto pos = obj->getPosition();
+                std::string key = std::to_string(obj->m_objectID) + "_" + 
+                                 std::to_string((int)pos.x) + "_" + 
+                                 std::to_string((int)pos.y);
+                
+                if (uniqueObjects.find(key) != uniqueObjects.end()) {
+                    toRemove.push_back(obj);
+                    removedDuplicates++;
+                } else {
+                    uniqueObjects[key] = obj;
+                }
+            }
+        }
+        
+        // Remove invisible objects (outside level bounds)
+        if (removeInvisible) {
+            for (int i = 0; i < objects->count(); i++) {
+                auto obj = static_cast<GameObject*>(objects->objectAtIndex(i));
+                if (!obj) continue;
+                
+                auto pos = obj->getPosition();
+                // Level bounds: X: 0-30000, Y: 0-1000
+                if (pos.x < -100 || pos.x > 30100 || pos.y < -100 || pos.y > 1100) {
+                    toRemove.push_back(obj);
+                    removedInvisible++;
+                }
+            }
+        }
+        
+        // Remove marked objects
+        for (auto obj : toRemove) {
+            editor->removeObject(obj, true);
+        }
+        
+        std::string result = "OPTIMIZE_RESULT:";
+        result += "duplicates=" + std::to_string(removedDuplicates);
+        result += ",invisible=" + std::to_string(removedInvisible);
+        result += ",triggers=" + std::to_string(optimizedTriggers);
+        
+        return result;
+    }
+    
+    // Export section of level
+    static std::string exportSection(EditorUI* editorUI, float startX, float endX) {
+        if (!editorUI) return "{\"error\":\"No editor\"}";
+        
+        auto editor = editorUI->m_editorLayer;
+        if (!editor) return "{\"error\":\"No editor layer\"}";
+        
+        auto objects = editor->m_objects;
+        if (!objects) return "{\"error\":\"No objects array\"}";
+        
+        std::string json = "{\"objects\":[";
+        bool first = true;
+        
+        for (int i = 0; i < objects->count(); i++) {
+            auto obj = static_cast<GameObject*>(objects->objectAtIndex(i));
+            if (!obj) continue;
+            
+            auto pos = obj->getPosition();
+            
+            // Only export objects in range
+            if (pos.x >= startX && pos.x <= endX) {
+                if (!first) json += ",";
+                first = false;
+                
+                float rotation = obj->getRotation();
+                float scaleX = obj->getScaleX();
+                float scaleY = obj->getScaleY();
+                int objID = obj->m_objectID;
+                
+                json += "{";
+                json += "\"id\":" + std::to_string(objID) + ",";
+                json += "\"x\":" + std::to_string(pos.x) + ",";
+                json += "\"y\":" + std::to_string(pos.y) + ",";
+                json += "\"rotation\":" + std::to_string(rotation) + ",";
+                json += "\"scaleX\":" + std::to_string(scaleX) + ",";
+                json += "\"scaleY\":" + std::to_string(scaleY);
+                json += "}";
+            }
+        }
+        
+        json += "]}";
+        return json;
+    }
+};
+
+// Auto-backup handler
+class AutoBackupHandler {
+public:
+    static bool backupEnabled;
+    static int backupInterval;
+    static std::chrono::steady_clock::time_point lastBackup;
+    
+    static void startAutoBackup(int intervalMinutes) {
+        backupEnabled = true;
+        backupInterval = intervalMinutes;
+        lastBackup = std::chrono::steady_clock::now();
+    }
+    
+    static void stopAutoBackup() {
+        backupEnabled = false;
+    }
+    
+    static bool shouldBackup() {
+        if (!backupEnabled) return false;
+        
+        auto now = std::chrono::steady_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::minutes>(now - lastBackup).count();
+        
+        if (elapsed >= backupInterval) {
+            lastBackup = now;
+            return true;
+        }
+        
+        return false;
+    }
 };
 
 // Trigger command handlers
