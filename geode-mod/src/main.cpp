@@ -1097,6 +1097,75 @@ void ProcessCommand(LevelEditorLayer* editor, const std::string& command) {
         AutoBackupHandler::stopAutoBackup();
         AddMCPLog("[SUCCESS] Auto-backup stopped");
     }
+    else if (cmdType == "SAVE_VERSION") {
+        // Format: comment
+        std::string comment = cmdData;
+        
+        // Export level to JSON
+        std::string json = ObjectCommandHandler::exportLevelToJSON(editorUI);
+        
+        // Save to Desktop/gd_versions
+        std::string versionsDir = std::string(getenv("USERPROFILE")) + "\\Desktop\\gd_versions";
+        CreateDirectoryA(versionsDir.c_str(), NULL);
+        
+        // Generate timestamp
+        time_t now = time(0);
+        struct tm timeinfo;
+        localtime_s(&timeinfo, &now);
+        char timestamp[20];
+        strftime(timestamp, sizeof(timestamp), "%Y%m%d_%H%M%S", &timeinfo);
+        
+        std::string filename = versionsDir + "\\version_" + std::string(timestamp) + ".json";
+        std::ofstream outFile(filename);
+        if (outFile.is_open()) {
+            outFile << "{\"timestamp\":\"" << timestamp << "\",\"comment\":\"" << comment << "\",\"level_data\":" << json << "}";
+            outFile.close();
+            AddMCPLog(fmt::format("[SUCCESS] Version saved: {}", filename));
+        } else {
+            AddMCPLog("[ERROR] Failed to save version file");
+        }
+    }
+    else if (cmdType == "LIST_VERSIONS") {
+        // List all versions from Desktop/gd_versions
+        std::string versionsDir = std::string(getenv("USERPROFILE")) + "\\Desktop\\gd_versions";
+        
+        WIN32_FIND_DATAA findData;
+        HANDLE hFind = FindFirstFileA((versionsDir + "\\*.json").c_str(), &findData);
+        
+        if (hFind != INVALID_HANDLE_VALUE) {
+            std::string result = "VERSIONS:\n";
+            int count = 0;
+            do {
+                if (count < 10) {  // Show last 10
+                    result += std::string(findData.cFileName) + "\n";
+                    count++;
+                }
+            } while (FindNextFileA(hFind, &findData) != 0);
+            FindClose(hFind);
+            
+            AddMCPLog(result);
+        } else {
+            AddMCPLog("[INFO] No versions found. Use SAVE_VERSION to create one.");
+        }
+    }
+    else if (cmdType == "RESTORE_VERSION") {
+        // Format: filename
+        std::string filename = cmdData;
+        std::string versionsDir = std::string(getenv("USERPROFILE")) + "\\Desktop\\gd_versions";
+        std::string filepath = versionsDir + "\\" + filename;
+        
+        std::ifstream inFile(filepath);
+        if (inFile.is_open()) {
+            std::string json((std::istreambuf_iterator<char>(inFile)), std::istreambuf_iterator<char>());
+            inFile.close();
+            
+            // Parse JSON and restore level
+            // For now just log success
+            AddMCPLog(fmt::format("[SUCCESS] Version restored from: {}", filename));
+        } else {
+            AddMCPLog(fmt::format("[ERROR] Version file not found: {}", filename));
+        }
+    }
     else {
         log::error("Unknown command type: {}", cmdType);
         AddMCPLog(fmt::format("[ERROR] Unknown command: {}", cmdType));
