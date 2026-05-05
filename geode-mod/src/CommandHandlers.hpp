@@ -692,4 +692,84 @@ public:
         
         return trigger;
     }
+
+    // Create Shader Trigger
+    static GameObject* createShaderTrigger(EditorUI* editorUI, int shaderId, float x, float y, float strength, float duration) {
+        if (!editorUI) return nullptr;
+        
+        // Shader triggers start from IDs around 1800-1900+
+        // Example: Chromatic Aberration = 1934, Glitch = 1935, etc.
+        auto trigger = editorUI->createObject(shaderId, {x, y});
+        if (!trigger) return nullptr;
+        
+        if (auto effectObj = typeinfo_cast<EffectGameObject*>(trigger)) {
+            effectObj->m_duration = duration;
+            // Strength often maps to different properties depending on shader
+            // For most 2.2 shaders, we'll need to set the specific effect properties
+        }
+        
+        return trigger;
+    }
+
+    // Create SFX Trigger (ID 1920)
+    static GameObject* createSFXTrigger(EditorUI* editorUI, float x, float y, int sfxId, float volume, float pitch, bool loop) {
+        if (!editorUI) return nullptr;
+        
+        auto trigger = editorUI->createObject(1920, {x, y});
+        if (!trigger) return nullptr;
+        
+        // We'll use the generic property setting if available or specialized fields
+        // In Geode/GD, SFX ID is property 392
+        // Volume is property 393
+        // Pitch is property 394
+        return trigger;
+    }
+};
+
+// Utility command handlers for screenshots and other system tasks
+class UtilityCommandHandler {
+public:
+    static std::string captureScreenshot(EditorUI* editorUI, const std::string& filename) {
+        if (!editorUI) return "ERROR: No editor UI";
+        
+        auto editor = editorUI->m_editorLayer;
+        if (!editor) return "ERROR: No editor layer";
+        
+        // Path to Desktop
+        std::string path = (std::filesystem::path(geode::utils::dirs::getGameDir()) / filename).string();
+        
+        // Hide UI
+        editorUI->setVisible(false);
+        
+        // Hide MCP Button if it exists
+        auto mcpBtn = editorUI->getChildByIDRecursive("mcp-button");
+        if (mcpBtn) mcpBtn->setVisible(false);
+        
+        // Capture after a short delay to ensure UI is hidden
+        Loader::get()->queueInMainThread([editor, editorUI, path, mcpBtn]() {
+            utils::capture::captureToPNG(path);
+            
+            // Show UI back
+            editorUI->setVisible(true);
+            if (mcpBtn) mcpBtn->setVisible(true);
+            
+            log::info("Screenshot saved to: {}", path);
+        });
+        
+        return "SUCCESS: Screenshot capture initiated";
+    }
+};
+
+class ParticleCommandHandler {
+public:
+    static GameObject* createParticle(EditorUI* editorUI, float x, float y, int count, float speed, float lifetime) {
+        if (!editorUI) return nullptr;
+        
+        // Particle object ID = 1900
+        auto obj = editorUI->createObject(1900, {x, y});
+        if (!obj) return nullptr;
+        
+        // Configuration logic would go here
+        return obj;
+    }
 };

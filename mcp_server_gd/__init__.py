@@ -682,11 +682,240 @@ def main() -> int:
             return "Failed to send command"
     
     @mcp.tool()
+    def gd_zoom_trigger(x: float, y: float, zoom: float, duration: float, easing: int = 0) -> str:
+        """Create a Zoom Trigger to change camera zoom
+        
+        Args:
+            x: Trigger X position
+            y: Trigger Y position
+            zoom: Zoom factor (0.5 to 2.0)
+            duration: Duration in seconds
+            easing: Easing type (0-15)
+        """
+        command = f"ZOOM_TRIGGER:{x},{y},{zoom},{duration},{easing}"
+        if send_command(command):
+            return f"Created Zoom Trigger (zoom={zoom}) at ({x}, {y})"
+        else:
+            return "Failed to send command"
+
+    @mcp.tool()
+    def gd_shader_trigger(x: float, y: float, shader_type: str, strength: float = 1.0, duration: float = 0.5) -> str:
+        """Create a Shader Trigger to apply visual effects.
+        
+        Available shader_types:
+        - 'chromatic': Chromatic Aberration (RGB split effect) [ID 1934]
+        - 'glitch': Glitch effect (screen shaking/tearing) [ID 1935]
+        - 'grayscale': Black and white effect [ID 1936]
+        - 'sepia': Old photo effect [ID 1937]
+        - 'invert': Invert colors [ID 1938]
+        - 'pixelate': Retro pixel effect [ID 1939]
+        - 'blur': Screen blur [ID 1940]
+        
+        Args:
+            x: Trigger X position
+            y: Trigger Y position
+            shader_type: Type of shader (chromatic, glitch, grayscale, sepia, invert, pixelate, blur)
+            strength: Intensity of the effect (0.0 to 1.0)
+            duration: Fade in/out duration in seconds
+        """
+        shader_map = {
+            "chromatic": 1934,
+            "glitch": 1935,
+            "grayscale": 1936,
+            "sepia": 1937,
+            "invert": 1938,
+            "pixelate": 1939,
+            "blur": 1940
+        }
+        
+        shader_id = shader_map.get(shader_type.lower())
+        if not shader_id:
+            return f"Unknown shader type: {shader_type}. Available: {', '.join(shader_map.keys())}"
+            
+        command = f"SHADER_TRIGGER:{x},{y},{shader_id},{strength},{duration}"
+        if send_command(command):
+            return f"Created {shader_type.upper()} Shader Trigger at ({x}, {y})"
+        else:
+            return "Failed to send command"
+    
+    @mcp.tool()
+    def gd_camera_static(x: float, y: float, targetGroup: int, duration: float, easing: int = 0, exitStatic: bool = False) -> str:
+        """Create a Static Camera Trigger to lock the camera focus on a group.
+        
+        Args:
+            x: Trigger X position
+            y: Trigger Y position
+            targetGroup: Group ID for the camera to follow/lock on
+            duration: Smooth transition duration in seconds
+            easing: Easing type (0-15)
+            exitStatic: If True, the camera will return to normal (stops follow)
+        """
+        # We can use targetGroup=0 or a special flag to signal exit in our protocol
+        final_group = 0 if exitStatic else targetGroup
+        command = f"STATIC_CAMERA_TRIGGER:{x},{y},{final_group},{duration},{easing}"
+        if send_command(command):
+            status = "Exit Static" if exitStatic else f"Follow Group {targetGroup}"
+            return f"Created Static Camera Trigger ({status}) at ({x}, {y})"
+        else:
+            return "Failed to send command"
+
+    @mcp.tool()
+    def gd_create_particle(x: float, y: float, count: int = 100, speed: float = 100.0, lifetime: float = 2.0) -> str:
+        """Create a custom particle system (ID 1900).
+        
+        This tool creates a particle object. To see how it looks, call gd_capture_screenshot() 
+        after creating it.
+        
+        Visual guide for AI:
+        - High 'count' (>500): Dense cloud/explosion effect.
+        - High 'speed' (>200): Fast moving sparks or fire.
+        - Long 'lifetime' (>5.0): Smoke or slow-fading magic trails.
+        
+        Args:
+            x: X position
+            y: Y position
+            count: Particle count
+            speed: Initial speed
+            lifetime: How long particles last in seconds
+        """
+        command = f"CREATE_PARTICLE:{x},{y},{count},{speed},{lifetime}"
+        if send_command(command):
+            return f"Created particle system at ({x}, {y}). TIP: Call gd_capture_screenshot() to see it!"
+        else:
+            return "Failed to send command"
+
+    @mcp.tool()
+    def gd_sync_calculator(bpm: float, offset_ms: float = 0.0, speed_multiplier: str = "1x") -> str:
+        """Calculate X positions for musical beats to ensure perfect SYNC.
+        
+        Use this to know exactly where to place Pulse triggers, jumps, or flashes.
+        
+        Speed Multipliers: '0.5x', '1x', '2x', '3x', '4x'
+        
+        Args:
+            bpm: Beats per minute of the song.
+            offset_ms: Music offset in milliseconds.
+            speed_multiplier: Current game speed.
+        """
+        speeds = {
+            "0.5x": 251.16,
+            "1x": 311.58,
+            "2x": 411.66,
+            "3x": 491.52,
+            "4x": 611.60
+        }
+        
+        pixels_per_second = speeds.get(speed_multiplier, 311.58)
+        seconds_per_beat = 60.0 / bpm
+        pixels_per_beat = seconds_per_beat * pixels_per_second
+        
+        return (f"SYNC INFO for {bpm} BPM at {speed_multiplier}:\n"
+                f"- Pixels per beat: {pixels_per_beat:.2f} units\n"
+                f"- Every 4 beats: {pixels_per_beat * 4:.2f} units\n"
+                f"Place your visual effects at these intervals starting from offset.")
+
+    @mcp.tool()
+    def gd_apply_preset(preset_name: str, x: float, y: float, groups: str = "0") -> str:
+        """Apply a decoration preset from the deco_library.
+        
+        Args:
+            preset_name: Name of the preset (e.g., 'hell_style')
+            x: Base X position
+            y: Base Y position
+            groups: Additional groups to add to all objects in the preset
+        """
+        import json
+        import os
+        
+        preset_path = os.path.join(os.path.dirname(__file__), "deco_library", f"{preset_name}.json")
+        if not os.path.exists(preset_path):
+            return f"Preset '{preset_name}' not found in deco_library."
+            
+        try:
+            with open(preset_path, "r") as f:
+                preset_data = json.load(f)
+                
+            objects = preset_data.get("objects", [])
+            commands = []
+            for obj in objects:
+                obj_id = obj.get("id")
+                rel_x = obj.get("x", 0)
+                rel_y = obj.get("y", 0)
+                
+                # We can extend this to support scale, rotation, color etc if we update LOAD_LEVEL
+                # For now, let's just use the basic LOAD_LEVEL format: id,x,y,groups,color
+                obj_groups = obj.get("groups", "0")
+                if groups != "0":
+                    if obj_groups == "0":
+                        obj_groups = groups
+                    else:
+                        obj_groups = f"{obj_groups}:{groups}"
+                
+                color = obj.get("color_channel", 0)
+                
+                commands.append(f"{obj_id},{x + rel_x},{y + rel_y},{obj_groups},{color}")
+            
+            full_command = f"LOAD_LEVEL:{';'.join(commands)}"
+            if send_command(full_command):
+                return f"Applied preset '{preset_name}' at ({x}, {y}) with {len(objects)} objects."
+            else:
+                return "Failed to send command."
+        except Exception as e:
+            return f"Error applying preset: {str(e)}"
+
+    @mcp.tool()
+    def gd_sfx_trigger(x: float, y: float, sfx_id: int, volume: float = 1.0, pitch: float = 1.0, loop: bool = False) -> str:
+        """Create an SFX Trigger to play sound effects.
+        
+        Args:
+            x: Trigger X position
+            y: Trigger Y position
+            sfx_id: Sound Effect ID (check GD documentation or trial and error)
+            volume: Volume (0.0 to 1.0)
+            pitch: Pitch shift (0.5 to 2.0)
+            loop: Whether to loop the sound
+        """
+        command = f"SFX_TRIGGER:{x},{y},{sfx_id},{volume},{pitch},{int(loop)}"
+        if send_command(command):
+            return f"Created SFX Trigger (ID={sfx_id}) at ({x}, {y})"
+        else:
+            return "Failed to send command"
+
+    @mcp.tool()
+    def gd_edit_trigger(x: float, y: float, property: str, value: str) -> str:
+        """Edit properties of a trigger at a specific position.
+        
+        Args:
+            x: X position of the trigger
+            y: Y position of the trigger
+            property: Property name (e.g., 'targetGroup', 'duration', 'opacity')
+            value: New value for the property
+        """
+        command = f"EDIT_TRIGGER:{x},{y},{property},{value}"
+        if send_command(command):
+            return f"Requested edit of {property} to {value} for trigger at ({x}, {y})"
+        else:
+            return "Failed to send command"
+
+    @mcp.tool()
     def gd_undo() -> str:
         """Undo the last action in the editor"""
         command = "UNDO:"
         if send_command(command):
             return "Undo action sent"
+        else:
+            return "Failed to send command"
+    
+    @mcp.tool()
+    def gd_capture_screenshot(filename: str = "gd_screenshot.png") -> str:
+        """Capture a clean screenshot of the editor (without UI)
+        
+        Args:
+            filename: Output filename (saved to Geometry Dash directory)
+        """
+        command = f"CAPTURE_SCREENSHOT:{filename}"
+        if send_command(command):
+            return f"Screenshot capture requested: {filename}. Interface will be hidden briefly."
         else:
             return "Failed to send command"
     

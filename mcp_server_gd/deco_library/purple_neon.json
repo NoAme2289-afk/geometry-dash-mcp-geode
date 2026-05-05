@@ -1,0 +1,11 @@
+{
+  "name": "Purple Neon Cluster",
+  "description": "Inspired by the user screenshot: purple glow, dark blocks, and neon green accents",
+  "objects": [
+    {"id": 1, "x": 0, "y": 0, "comment": "Base block"},
+    {"id": 211, "x": 0, "y": 0, "scale": 1.2, "color_channel": 1, "comment": "Purple glow (Channel 1)"},
+    {"id": 1825, "x": 0, "y": 15, "scale": 0.5, "color_channel": 2, "comment": "Neon green accent (Channel 2)"},
+    {"id": 1825, "x": 0, "y": -15, "scale": 0.5, "color_channel": 2, "comment": "Neon green accent (Channel 2)"},
+    {"id": 917, "x": 0, "y": 0, "comment": "Internal detail"}
+  ]
+}
