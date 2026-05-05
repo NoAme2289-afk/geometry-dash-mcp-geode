@@ -760,14 +760,45 @@ void ProcessCommand(LevelEditorLayer* editor, const std::string& command) {
             }
         }
     }
+    else if (cmdType == "ZOOM_TRIGGER") {
+        // Format: x,y,zoom,duration,easing
+        std::stringstream ss(cmdData);
+        std::string token;
+        std::vector<std::string> params_zoom;
+        while (std::getline(ss, token, ',')) {
+            params_zoom.push_back(token);
+        }
+        
+        if (params_zoom.size() >= 5) {
+            float x = std::stof(params_zoom[0]);
+            float y = std::stof(params_zoom[1]);
+            float zoom = std::stof(params_zoom[2]);
+            float duration = std::stof(params_zoom[3]);
+            int easing = std::stoi(params_zoom[4]);
+            
+            auto trigger = TriggerCommandHandler::createZoomTrigger(editorUI, x, y, zoom, duration, easing);
+            if (trigger) {
+                AddMCPLog(fmt::format("[SUCCESS] Created Zoom Trigger at ({},{})", x, y));
+            } else {
+                AddMCPLog("[ERROR] Failed to create Zoom Trigger");
+            }
+        }
+    }
     else if (cmdType == "STATIC_CAMERA_TRIGGER") {
-        // ... (existing code)
-        if (params.size() >= 5) {
-            float x = std::stof(params[0]);
-            float y = std::stof(params[1]);
-            int targetGroup = std::stoi(params[2]);
-            float duration = std::stof(params[3]);
-            int easing = std::stoi(params[4]);
+        // Format: x,y,targetGroup,duration,easing
+        std::stringstream ss(cmdData);
+        std::string token;
+        std::vector<std::string> params_camera;
+        while (std::getline(ss, token, ',')) {
+            params_camera.push_back(token);
+        }
+        
+        if (params_camera.size() >= 5) {
+            float x = std::stof(params_camera[0]);
+            float y = std::stof(params_camera[1]);
+            int targetGroup = std::stoi(params_camera[2]);
+            float duration = std::stof(params_camera[3]);
+            int easing = std::stoi(params_camera[4]);
             
             auto trigger = TriggerCommandHandler::createStaticCameraTrigger(editorUI, x, y, targetGroup > 0, duration);
             if (trigger) {
