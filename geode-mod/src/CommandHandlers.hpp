@@ -746,8 +746,14 @@ public:
         if (mcpBtn) mcpBtn->setVisible(false);
         
         // Capture after a short delay to ensure UI is hidden
-        Loader::get()->queueInMainThread([editor, editorUI, path, mcpBtn]() {
-            geode::utils::capture::captureToPNG(path);
+        Loader::get()->queueInMainThread([editor, editorUI, path, mcpBtn, filename]() {
+            // Manual screenshot using Cocos2d if Geode utils are tricky
+            auto winSize = cocos2d::CCDirector::sharedDirector()->getWinSize();
+            auto target = cocos2d::CCRenderTexture::create(winSize.width, winSize.height);
+            target->begin();
+            cocos2d::CCDirector::sharedDirector()->getRunningScene()->visit();
+            target->end();
+            target->saveToFile(filename.c_str(), cocos2d::kCCImageFormatPNG);
             
             // Show UI back
             editorUI->setVisible(true);
