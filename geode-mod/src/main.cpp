@@ -511,6 +511,31 @@ void ProcessCommand(LevelEditorLayer* editor, const std::string& command) {
             editorUI->updateButtons();
         }
     }
+    else if (cmdType == "SFX_TRIGGER") {
+        // Format: x,y,sfxId,volume,pitch,loop
+        std::stringstream ss(cmdData);
+        std::string token;
+        std::vector<std::string> params;
+        while (std::getline(ss, token, ',')) {
+            params.push_back(token);
+        }
+        
+        if (params.size() >= 6) {
+            float x = std::stof(params[0]);
+            float y = std::stof(params[1]);
+            int sfxId = std::stoi(params[2]);
+            float volume = std::stof(params[3]);
+            float pitch = std::stof(params[4]);
+            bool loop = params[5] == "1" || params[5] == "true";
+            
+            auto trigger = TriggerCommandHandler::createSFXTrigger(editorUI, x, y, sfxId, volume, pitch, loop);
+            if (trigger) {
+                AddMCPLog(fmt::format("[SUCCESS] Created SFX Trigger (ID={}) at ({},{})", sfxId, x, y));
+            } else {
+                AddMCPLog("[ERROR] Failed to create SFX Trigger");
+            }
+        }
+    }
     else if (cmdType == "EDIT_TRIGGER") {
         // Format: x,y,property,value
         // Example: EDIT_TRIGGER:50,150,targetGroup,5
@@ -708,6 +733,74 @@ void ProcessCommand(LevelEditorLayer* editor, const std::string& command) {
                 AddMCPLog(fmt::format("[SUCCESS] Created Zoom Trigger at ({},{})", x, y));
             } else {
                 AddMCPLog("[ERROR] Failed to create Zoom Trigger");
+            }
+        }
+    }
+    else if (cmdType == "SHADER_TRIGGER") {
+        // Format: x,y,shaderId,strength,duration
+        std::stringstream ss(cmdData);
+        std::string token;
+        std::vector<std::string> params;
+        while (std::getline(ss, token, ',')) {
+            params.push_back(token);
+        }
+        
+        if (params.size() >= 5) {
+            float x = std::stof(params[0]);
+            float y = std::stof(params[1]);
+            int shaderId = std::stoi(params[2]);
+            float strength = std::stof(params[3]);
+            float duration = std::stof(params[4]);
+            
+            auto trigger = TriggerCommandHandler::createShaderTrigger(editorUI, shaderId, x, y, strength, duration);
+            if (trigger) {
+                AddMCPLog(fmt::format("[SUCCESS] Created Shader Trigger {} at ({},{})", shaderId, x, y));
+            } else {
+                AddMCPLog("[ERROR] Failed to create Shader Trigger");
+            }
+        }
+    }
+    else if (cmdType == "STATIC_CAMERA_TRIGGER") {
+        // ... (existing code)
+        if (params.size() >= 5) {
+            float x = std::stof(params[0]);
+            float y = std::stof(params[1]);
+            int targetGroup = std::stoi(params[2]);
+            float duration = std::stof(params[3]);
+            int easing = std::stoi(params[4]);
+            
+            auto trigger = TriggerCommandHandler::createStaticCameraTrigger(editorUI, x, y, targetGroup > 0, duration);
+            if (trigger) {
+                if (auto effectObj = typeinfo_cast<EffectGameObject*>(trigger)) {
+                    effectObj->m_targetGroupID = targetGroup;
+                }
+                AddMCPLog(fmt::format("[SUCCESS] Created Static Camera Trigger at ({},{})", x, y));
+            } else {
+                AddMCPLog("[ERROR] Failed to create Static Camera Trigger");
+            }
+        }
+    }
+    else if (cmdType == "CREATE_PARTICLE") {
+        // Format: x,y,count,speed,lifetime
+        std::stringstream ss(cmdData);
+        std::string token;
+        std::vector<std::string> params;
+        while (std::getline(ss, token, ',')) {
+            params.push_back(token);
+        }
+        
+        if (params.size() >= 5) {
+            float x = std::stof(params[0]);
+            float y = std::stof(params[1]);
+            int count = std::stoi(params[2]);
+            float speed = std::stof(params[3]);
+            float lifetime = std::stof(params[4]);
+            
+            auto obj = ParticleCommandHandler::createParticle(editorUI, x, y, count, speed, lifetime);
+            if (obj) {
+                AddMCPLog(fmt::format("[SUCCESS] Created Particle Object at ({},{})", x, y));
+            } else {
+                AddMCPLog("[ERROR] Failed to create Particle Object");
             }
         }
     }
@@ -1030,6 +1123,12 @@ void ProcessCommand(LevelEditorLayer* editor, const std::string& command) {
             editorUI->updateButtons();
         }
     }
+    else if (cmdType == "CAPTURE_SCREENSHOT") {
+        // Format: filename
+        std::string filename = cmdData.empty() ? "gd_screenshot.png" : cmdData;
+        std::string result = UtilityCommandHandler::captureScreenshot(editorUI, filename);
+        AddMCPLog(result);
+    }
     else if (cmdType == "EXPORT_SECTION") {
         // Format: startX,endX,filename
         std::stringstream ss(cmdData);
@@ -1207,11 +1306,12 @@ class $modify(GDMCPEditorUI, EditorUI) {
         auto winSize = CCDirector::sharedDirector()->getWinSize();
         
         auto mcpBtn = CCMenuItemSpriteExtra::create(
-            ButtonSprite::create("MCP", "goldFont.fnt", "GJ_button_01.png", 0.8f),
+            ButtonSprite::create("MCP", "goldFont.fnt", "GJ_button_01.png", 0.6f),
             this,
             menu_selector(GDMCPEditorUI::onMCPButton)
         );
-        mcpBtn->setPosition(winSize.width - 100, winSize.height - 30);
+        mcpBtn->setID("mcp-button");
+        mcpBtn->setPosition(winSize.width - 160, winSize.height - 40);
         
         // Add to existing menu or create new one
         if (auto menu = this->getChildByID("top-menu")) {

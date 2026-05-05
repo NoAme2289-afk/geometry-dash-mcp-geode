@@ -1,0 +1,13 @@
+{
+  "name": "Hell Deco Cluster V2",
+  "description": "Professional hell-style decoration with stacked glow and internal details",
+  "objects": [
+    {"id": 1, "x": 0, "y": 0, "comment": "Main dark block"},
+    {"id": 211, "x": 0, "y": 0, "scale": 1.5, "color_channel": 3, "comment": "Red glow base (Channel 3)"},
+    {"id": 211, "x": 0, "y": 0, "scale": 1.0, "color_channel": 4, "comment": "Brighter red center (Channel 4)"},
+    {"id": 211, "x": -10, "y": 10, "scale": 0.6, "color_channel": 4, "comment": "Highlight"},
+    {"id": 211, "x": 10, "y": -10, "scale": 0.6, "color_channel": 4, "comment": "Highlight"},
+    {"id": 917, "x": 0, "y": 0, "color_channel": 3, "comment": "Internal tech detail"},
+    {"id": 660, "x": 0, "y": 15, "scale": 0.8, "color_channel": 3, "comment": "Top spike decoration"}
+  ]
+}

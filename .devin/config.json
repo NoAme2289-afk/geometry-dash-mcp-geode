@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "geometry-dash": {
+      "command": "python",
+      "args": ["-m", "mcp_server_gd"],
+      "transport": "stdio"
+    }
+  }
+}
