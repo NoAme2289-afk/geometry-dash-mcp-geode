@@ -1,16 +1,36 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "mcp-server-gd"
+name = "gdmcp"
 version = "2.2.0"
-description = "MCP server for Geometry Dash level editor control"
+description = "AI-powered level creation system for Geometry Dash via MCP"
+readme = "README.md"
 requires-python = ">=3.10"
+authors = [
+    { name = "NoAme2289" }
+]
+keywords = ["geometry-dash", "mcp", "ai", "automation"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: Microsoft :: Windows",
+]
 dependencies = [
     "mcp>=1.0.0",
-    "pywin32"
+    "pywin32; sys_platform == 'win32'"
 ]
 
+[project.urls]
+"Homepage" = "https://github.com/NoAme2289-afk/geometry-dash-mcp-geode"
+"Bug Tracker" = "https://github.com/NoAme2289-afk/geometry-dash-mcp-geode/issues"
+
 [project.scripts]
-mcp-server-gd = "mcp_server_gd:main"
+gdmcp = "mcp_server_gd:main"
+
+[tool.setuptools]
+packages = ["mcp_server_gd"]
+
+[tool.setuptools.package-data]
+mcp_server_gd = ["deco_library/*.json"]

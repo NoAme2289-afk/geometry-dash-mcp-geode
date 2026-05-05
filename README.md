@@ -7,6 +7,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Geode](https://img.shields.io/badge/Geode-3.0-blue.svg)](https://geode-sdk.org/)
 [![MCP](https://img.shields.io/badge/MCP-1.0-green.svg)](https://modelcontextprotocol.io/)
+[![PyPI](https://img.shields.io/pypi/v/gdmcp.svg)](https://pypi.org/project/gdmcp/)
 
 ## 🌟 Особенности
 
@@ -19,6 +20,7 @@
 - 🧠 **AI анализ** - получайте рекомендации по улучшению дизайна
 - ⚡ **Real-time** - изменения применяются мгновенно через named pipe
 - 🔧 **Geode мод** - нативная интеграция с Geometry Dash
+- 📦 **PyPI Ready** - установка одной командой `pip install gdmcp`
 
 ## 🎯 Что можно делать
 
@@ -33,7 +35,17 @@
 
 ## 🚀 Быстрый старт
 
-### 1. Установка Geode мода
+### 1. Установка Python MCP сервера
+
+Теперь сервер можно установить одной командой через PyPI:
+
+```bash
+pip install gdmcp
+```
+
+После установки команда `gdmcp` станет доступна глобально в вашей системе.
+
+### 2. Установка Geode мода
 
 1. Скачайте последнюю версию мода из [Releases](https://github.com/NoAme2289-afk/geometry-dash-mcp-geode/releases)
 2. Скопируйте `gdmcp.geode` в папку с модами Geode:
@@ -41,32 +53,25 @@
    - **Или в папку с игрой:** `<путь к GD>\geode\mods\`
 3. Запустите Geometry Dash
 
-### 2. Установка Python MCP сервера
+### 3. Настройка OpenCode / Claude Desktop / Devin
 
-```bash
-pip install -e .
-```
-
-### 3. Настройка OpenCode
-
-Добавьте в конфигурацию OpenCode (`opencode.json`):
+Добавьте в конфигурацию MCP:
 
 ```json
 {
   "mcpServers": {
-    "geometry-dash": {
-      "command": "python",
-      "args": ["-m", "mcp_server_gd"]
+    "gdmcp": {
+      "command": "gdmcp"
     }
   }
 }
 ```
 
-Перезапустите OpenCode.
+Перезапустите ваш MCP клиент.
 
 ### 4. Создайте первый уровень
 
-Откройте редактор уровня в Geometry Dash, затем в OpenCode напишите:
+Откройте редактор уровня в Geometry Dash, затем в вашем AI клиенте напишите:
 
 ```
 Create a playable Geometry Dash level with platforms, spikes, and an orb
@@ -268,8 +273,10 @@ cmake --build . --config Release
 # Установка в режиме разработки
 pip install -e .
 
-# Тестирование
-python -m mcp_server_gd
+# Сборка и загрузка в PyPI
+pip install build twine
+python -m build
+python -m twine upload dist/*
 ```
 
 ## ⚠️ Важные замечания
@@ -312,20 +319,13 @@ MIT License - используйте свободно!
 
 **Создано:** 18 апреля 2026  
 **Версия:** 2.2.0  
-**Статус:** Development 🚧
+**Статус:** Production Ready ✅
 
 **Достижения:**
+- ✅ Официальный PyPI пакет `gdmcp`
 - ✅ 60+ команд для управления уровнями
-- ✅ 8 новых триггеров (Pulse, Color, Follow, Spawn, Stop, Toggle, Shake, Animate)
-- ✅ Специальные объекты (Text, Item Counter, Collision Block, Teleport Portal)
-- ✅ Продвинутое управление (Copy, Paste, Rotate, Scale, Flip)
-- ✅ Генератор паттернов (line, circle, grid, wave)
-- ✅ Batch операции и массовое создание
-- ✅ Level Optimizer - автоматическая оптимизация уровня
-- ✅ Auto-backup система - автосохранение каждые 5 минут
-- ✅ Version Control - система версий с откатом
-- ✅ Collaboration Tools - экспорт/импорт секций, merge уровней
-- ✅ Экспорт в JSON и рендер в PNG
-- ✅ AI анализ через GigaChat
+- ✅ Полная поддержка Geometry Dash 2.2
+- ✅ Библиотека декораций `deco_library`
+- ✅ Auto-backup и Version Control
+- ✅ Рендер в PNG и экспорт в JSON
 - ✅ Протестировано на уровне с 17,969 объектами
-- ✅ Итеративное улучшение дизайна (от 0/10 до 9/10)
