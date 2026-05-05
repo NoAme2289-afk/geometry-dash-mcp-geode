@@ -111,9 +111,7 @@ protected:
         
         // --- ANIMATIONS ---
         this->setScale(0.1f);
-        this->setOpacity(0);
         this->runAction(CCEaseBackOut::create(CCScaleTo::create(0.3f, 1.0f)));
-        this->runAction(CCFadeIn::create(0.2f));
         
         this->setKeypadEnabled(true);
         this->setTouchEnabled(true);

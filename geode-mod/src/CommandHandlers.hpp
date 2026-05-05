@@ -736,7 +736,7 @@ public:
         if (!editor) return "ERROR: No editor layer";
         
         // Path to Desktop
-        std::string path = (std::filesystem::path(geode::utils::dirs::getGameDir()) / filename).string();
+        std::string path = (std::filesystem::path(geode::dirs::getGameDir()) / filename).string();
         
         // Hide UI
         editorUI->setVisible(false);
@@ -747,7 +747,7 @@ public:
         
         // Capture after a short delay to ensure UI is hidden
         Loader::get()->queueInMainThread([editor, editorUI, path, mcpBtn]() {
-            utils::capture::captureToPNG(path);
+            geode::utils::capture::captureToPNG(path);
             
             // Show UI back
             editorUI->setVisible(true);
